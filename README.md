@@ -77,6 +77,8 @@
 7) 32I.rb — описание ISA (ADD, SUB, ...)
 
 ### RiscV 32IM ISA Reference
-<details><summary>reference</summary>
-<embed src="readme_src/riscv_encoding.pdf" type="pdf" width="100%" height="800px">
+<details>
+
+<summary>Reference</summary>
+    <img src="readme_src/riscv_reference.jpg" width="800"/>
 </details>
