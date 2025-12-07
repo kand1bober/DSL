@@ -20,4 +20,6 @@ module SimInfra
         }[name]
         format_r(0b0110011, funct3, funct7, rd, rs1, rs2)
     end
+
+    
 end

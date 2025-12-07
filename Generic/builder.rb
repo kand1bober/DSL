@@ -16,6 +16,7 @@ module SimInfra
                 define_singleton_method(arg.name) { arg }
             end
         end
+        
         def encoding(format, fields); @info.fields = fields; @info.format = format; end
 
         def asm(&block)
