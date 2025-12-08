@@ -28,7 +28,20 @@ module SimInfra
     end
     #
     class Var
-        def+(other); @scope.add(self, other); end
-        def-(other); @scope.sub(self, other); end
+        def add(other); @scope.add(self, other); end
+        def sub(other); @scope.sub(self, other); end
+        def mul(other); @scope.mul(self, other); end
+        def div(other); @scope.div(self, other); end
+        
+        def and(other); @scope.and(self, other); end
+        def or(other); @scope.or(self, other); end
+        def xor(other); @scope.xor(self, other); end
+        
+        def sll(other); @scope.sll(self, other); end
+        def srl(other); @scope.srl(self, other); end
+        def sra(other); @scope.sra(self, other); end
+        
+        def slt(other); @scope.slt(self, other); end
+        def sltu(other); @scope.sltu(self, other); end
     end
 end

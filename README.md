@@ -76,9 +76,52 @@
 
 7) 32I.rb — описание ISA (ADD, SUB, ...)
 
+#### Схема:
+```C
+SimInfra (module)
+│
+├── GlobalCounter (module)
+│     - next_counter
+│
+├── Field, ImmFieldPart (Struct)
+│
+├── Constant (class)
+│     - @scope, @value
+│     - stmt(:new_const)
+│
+├── Var (class)
+│     - @scope, @name, @type
+│     - []=
+│     - +,-
+│
+├── Scope (class)
+│     - include GlobalCounter
+│     - @tree
+│     - @vars
+│     - stmt
+│     - var/add/sub/resolve_const
+│
+├── InstructionInfo (Struct)
+│
+├── InstructionInfoBuilder (class)
+│     - include SimInfra
+│     - @info
+│     - encoding
+│     - asm
+│     - code
+│
+└── Функции DSL
+      Instruction
+      field/immpart
+      format_r / format_r_alu
+      XReg
+      assert
+```
+
 ### RiscV 32IM ISA Reference
 <details>
 
 <summary>Reference</summary>
     <img src="readme_src/riscv_reference.jpg" width="800"/>
 </details>
+

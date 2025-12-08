@@ -12,6 +12,16 @@ module SimInfra
         ]
     end
 
+    def format_i(imm, rs1, funct3, rd, opcode) 
+        return :I, [
+            field(rd.name, 11, 7, :reg),
+            field(rs1.name, 19, 15, :reg),
+            field(imm.name, 31, 20, :reg),
+            field(:funct3, 14, 12, funct3),
+            field(:opcode, 6, 0, opcode),
+        ]
+    end
+
     def format_r_alu(name, rd, rs1, rs2)
         funct3, funct7 =
         {
@@ -21,5 +31,5 @@ module SimInfra
         format_r(0b0110011, funct3, funct7, rd, rs1, rs2)
     end
 
-    
+
 end
