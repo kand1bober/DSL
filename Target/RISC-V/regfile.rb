@@ -3,6 +3,7 @@ module SimInfra
         attr_reader :name
         def initialize(name)
             @name = name
+            return name
         end
 
         # String representation for asm output

@@ -14,15 +14,33 @@ allowed_classes = [
     SimInfra::IrStmt
 ]
 
-MAP = {
-    add: ->(dst, a, b) { "\tuint32_t #{dst} = #{a} + #{b};" },
-    sub: ->(dst, a, b) { "\tuint32_t #{dst} = #{a} - #{b};" },
-    and: ->(dst, a, b) { "\tuint32_t #{dst} = #{a} & #{b};" },
-    or: ->(dst, a, b) { "\tuint32_t #{dst} = #{a} | #{b};" },
-    xor: ->(dst, a, b) { "\tuint32_t #{dst} = #{a} ^ #{b};" },
-    sll: ->(dst, a, b) { "\tuint32_t #{dst} = #{a} << #{b};" },
-    sra: ->(dst, a, b) { "\tuint32_t #{dst} = #{a} >> #{b};" },
-  }  
+OPS = {
+    add: '+',
+    sub: '-',
+    and: '&',
+    or: '|',
+    xor: '^',
+
+    sll: '<<',
+    srl: '>>',
+    sra: '>>>',
+    slt: '<', 
+    sltu: '<',
+
+    mul: '*',
+    mulh: '*',
+    mulhsu: '*',
+    mulhu: '*',
+
+    div: '/',
+    divu: '/',
+    rem: '%',
+    remu: '%',    
+}
+
+MAP = OPS.transform_values do |op| 
+    ->(dst, a, b) { "\tuint32_t #{dst} = #{a} #{op} #{b};" }
+end
 
 # Загружаем YAML
 ir_list = YAML.safe_load(File.read('IR.yaml'), permitted_classes: allowed_classes, aliases: true)
@@ -48,7 +66,7 @@ File.open("interpret.cpp", "w") do |f|
             when :setreg
                 f.puts "\tcpu.regs[#{stmt.oprnds[0].name.to_s}] = #{stmt.oprnds[1]};"
             
-            when :add, :sub, :and, :or, :xor
+            when name.to_sym
                 dst = stmt.oprnds[0].name.to_s
                 a = stmt.oprnds[1].name.to_s
                 b = stmt.oprnds[2].name.to_s

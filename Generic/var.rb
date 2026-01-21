@@ -28,14 +28,12 @@ module SimInfra
     end
     #
     class Var
-        def add(other); @scope.add(self, other); end
-        def sub(other); @scope.sub(self, other); end
-        def mul(other); @scope.mul(self, other); end
-        def div(other); @scope.div(self, other); end
-        
-        def and(other); @scope.and(self, other); end
-        def or(other); @scope.or(self, other); end
-        def xor(other); @scope.xor(self, other); end
+        [:add, :sub, :and, :or, :xor].each do |op|
+            define_method(op) do |other|
+              @scope.public_send(op, self, other)
+            end
+          end
+          
         
         def sll(other); @scope.sll(self, other); end
         def srl(other); @scope.srl(self, other); end
@@ -43,5 +41,14 @@ module SimInfra
         
         def slt(other); @scope.slt(self, other); end
         def sltu(other); @scope.sltu(self, other); end
+
+        def mul(other); @scope.mul(self, other); end
+        def mulh(other); @scope.mulh(self, other); end
+        def mulhsu(other); @scope.mulhsu(self, other); end
+        def mulhu(other); @scope.mulhu(self, other); end
+        def div(other); @scope.div(self, other); end
+        def divu(other); @scope.divu(self, other); end
+        def rem(other); @scope.rem(self, other); end
+        def remu(other); @scope.remu(self, other); end        
     end
 end

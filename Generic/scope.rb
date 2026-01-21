@@ -36,13 +36,22 @@ module SimInfra
         def and(a,b); binOp(a,b, :and); end
         def or(a,b); binOp(a,b, :or); end
         def xor(a,b); binOp(a,b, :xor); end
-        def mul(a,b); binOp(a,b, :mul); end
-        def div(a,b); binOp(a,b, :div); end
+
         def sll(a,b); binOp(a,b, :sll); end
         def slt(a,b); binOp(a,b, :slt); end
         def sltu(a,b); binOp(a,b, :sltu); end
         def srl(a,b); binOp(a,b, :srl); end
         def sra(a,b); binOp(a,b, :sra); end
+
+        def mul(a, b); binOp(a, b, :mul); end
+        def mulh(a, b); binOp(a, b, :mulh); end
+        def mulhsu(a, b); binOp(a, b, :mulhsu); end
+        def mulhu(a, b); binOp(a, b, :mulhu); end
+        def div(a, b); binOp(a, b, :div); end
+        def divu(a, b); binOp(a, b, :divu); end
+        def rem(a, b); binOp(a, b, :rem); end
+        def remu(a, b); binOp(a, b, :remu); end
+
 
         private def tmpvar(type); var("_tmp#{next_counter}".to_sym, type); end
         # stmtadds statement into tree and retursoperand[0]
