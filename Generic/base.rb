@@ -1,6 +1,6 @@
 
 module SimInfra
-    @@instructions # -array of instruction description
+    # @@instructions # -array of instruction description
 
     # saves instruction description to 'IR.yaml' if called from standalone,
     # or prints to terminal, if called from IRB 

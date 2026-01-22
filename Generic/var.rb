@@ -7,9 +7,11 @@ module SimInfra
         def initialize(scope, name, type)
             @scope = scope; @name = name; @type = type;
         end
+        
         # Syntax "var[]=value" is used to assign variable
         # it's similar to "var[hi:lo]=value" for partial assignment
         def []=(other); @scope.stmt(:let, [self, other]); end
+        
         # dumps states and disables @scope dump
         def inspect; "#{@name}:#{@type} (#{@scope.object_id})"; end
     end

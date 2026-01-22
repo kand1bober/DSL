@@ -3,20 +3,28 @@ require_relative "var"
 
 module SimInfra
     class Scope
+    include GlobalCounter # used for temp variables IDs
+    # include SimInfra
 
-        include GlobalCounter# used for temp variables IDs
         attr_reader :tree, :vars, :parent
         def initialize(parent); @tree = []; @vars = {}; end
-        # resolve allows to convert Ruby Integer constants to Constant instance
-
+        
         def var(name, type)
-            @vars[name] = SimInfra::Var.new(self, name, type) # return var
-            instance_eval "def #{name.to_s}(); return @vars[:#{name.to_s}]; end"
-            stmt :new_var, [@vars[name]] # returns @vars[name]
+            @vars[name] = Var.new(self, name, type) # return var
+
+            # making methods. example: method rd return @vars[:rd]
+            instance_eval("def #{name.to_s}(); return @vars[:#{name.to_s}]; end")
+
+            stmt(:new_var, [@vars[name]]) # returns @vars[name]
         end
 
-        def add_var(name, type); var(name, type); self; end
+        # stmt adds statement into tree and returns operand[0]? which is scope
+        # which result in near all cases
+        def stmt(name, operands, attrs= nil);
+            @tree << IrStmt.new(name, operands, attrs); operands[0]
+        end
 
+        # resolve allows to convert Ruby Integer constants to Constant instance
         def resolve_const(what)
             return what if (what.class== Var) or (what.class== Constant) # or other known classes
             return Constant.new(self, "const_#{next_counter}", what) if (what.class== Integer)
@@ -27,7 +35,7 @@ module SimInfra
             # TODO: check constant size <= bitsize(var)
             # assert(a.type== b.type|| a.type == :iconst || b.type== :iconst)
 
-            stmt op, [tmpvar(a.type), a, b]
+            stmt(op, [tmpvar(a.type), a, b])
         end
 
         # redefine! add & sub will never be the same
@@ -54,10 +62,5 @@ module SimInfra
 
 
         private def tmpvar(type); var("_tmp#{next_counter}".to_sym, type); end
-        # stmtadds statement into tree and retursoperand[0]
-        # which result in near all cases
-        def stmt(name, operands, attrs= nil);
-            @tree << IrStmt.new(name, operands, attrs); operands[0]
-        end
     end
 end
