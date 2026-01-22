@@ -4,6 +4,7 @@ require_relative "../../Generic/base"
 
 module RV32I
     extend SimInfra
+    include SimInfra
 
     #---------- R ----------
     def self.make_r_insn(name)
@@ -14,14 +15,7 @@ module RV32I
         }
     end
 
-    R_ALU_INSNS = [
-        :add, :sub, :or, :and, :xor,
-        :sll, :slt, :sltu, :srl, :sra,
-        :mul, :mulh, :mulhsu, :mulhu,
-        :div, :divu, :rem, :remu
-    ]
-
-    R_ALU_INSNS.each do |name| 
+    [:add, :sub, :sll, :srl].each do |name| 
         make_r_insn(name)
     end
 

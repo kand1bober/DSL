@@ -37,3 +37,12 @@ module SimInfra
 
     def assert(condition, msg = nil); raise msg if !condition; end
 end
+
+module SimInfra
+    # R_ALU_INSNS = [
+    #     :add, :sub, :or, :and, :xor,
+    #     :sll, :slt, :sltu, :srl, :sra,
+    #     :mul, :mulh, :mulhsu, :mulhu,
+    #     :div, :divu, :rem, :remu
+    # ]
+end

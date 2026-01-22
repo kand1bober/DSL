@@ -81,6 +81,8 @@ File.open("interpret.cpp", "w") do |f|
             when :new_var # var declaration
                 f.puts("\tuint32_t #{stmt.oprnds[0].name};")
             end
+
+            else 
         end
 
         f.puts("}\n\n")

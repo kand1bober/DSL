@@ -4,20 +4,22 @@ require_relative "var"
 module SimInfra
     class Scope
     include GlobalCounter # used for temp variables IDs
-    # include SimInfra
 
         attr_reader :tree, :vars, :parent
         def initialize(parent); @tree = []; @vars = {}; end
-        
+
+#---------- Objects in code tree ---------        
         def var(name, type)
             @vars[name] = Var.new(self, name, type) # return var
-
+            
             # making methods. example: method rd return @vars[:rd]
             instance_eval("def #{name.to_s}(); return @vars[:#{name.to_s}]; end")
-
+            
             stmt(:new_var, [@vars[name]]) # returns @vars[name]
         end
 
+        private def tmpvar(type); var("_tmp#{next_counter}".to_sym, type); end
+        
         # stmt adds statement into tree and returns operand[0]? which is scope
         # which result in near all cases
         def stmt(name, operands, attrs= nil);
@@ -30,37 +32,51 @@ module SimInfra
             return Constant.new(self, "const_#{next_counter}", what) if (what.class== Integer)
         end
 
-        def binOp(a,b, op);
+#-------- Operators in code tree ---------
+        def un_op(a, op)
+            a = resolve_const(a); 
+            stmt(op, [a])
+        end
+        def bin_op(a,b, op);
             a = resolve_const(a); b = resolve_const(b)
             # TODO: check constant size <= bitsize(var)
             # assert(a.type== b.type|| a.type == :iconst || b.type== :iconst)
-
             stmt(op, [tmpvar(a.type), a, b])
         end
+        def ternary_op(a, b, c, op)
+            a = resolve_const(a); b = resolve_const(b); c = resolve_const(c)
+            stmt(op, [tmpvar(a.type), a, b, c])
+        end
 
+    #----- BASIC OPS ------
         # redefine! add & sub will never be the same
-        def add(a,b); binOp(a,b, :add); end
-        def sub(a,b); binOp(a,b, :sub); end
-        def and(a,b); binOp(a,b, :and); end
-        def or(a,b); binOp(a,b, :or); end
-        def xor(a,b); binOp(a,b, :xor); end
+        
+        # unary
+        [:ui8, :ui16, :ui32].each do |op|
+            define_method(op) { |a| un_op(a, op) }
+        end        
+    
+        # binary
+        [:add, :sub,      # instruction and operation have same representation,
+         :xor, :or, :and, # but in their case it is not a problem
 
-        def sll(a,b); binOp(a,b, :sll); end
-        def slt(a,b); binOp(a,b, :slt); end
-        def sltu(a,b); binOp(a,b, :sltu); end
-        def srl(a,b); binOp(a,b, :srl); end
-        def sra(a,b); binOp(a,b, :sra); end
+         :*, :/, :%,
+         :<<, :>>, :'>>>',   # shift left/right, ariphmetical right
+         :se, :ze,   # sign, unsign extension
+         :>, :<,     
+         :>=, :<=, 
+         :==, :'!='].each do |op|
+            define_method(op) { |a, b| bin_op(a, b, op) }
+        end
 
-        def mul(a, b); binOp(a, b, :mul); end
-        def mulh(a, b); binOp(a, b, :mulh); end
-        def mulhsu(a, b); binOp(a, b, :mulhsu); end
-        def mulhu(a, b); binOp(a, b, :mulhu); end
-        def div(a, b); binOp(a, b, :div); end
-        def divu(a, b); binOp(a, b, :divu); end
-        def rem(a, b); binOp(a, b, :rem); end
-        def remu(a, b); binOp(a, b, :remu); end
+        # ternary
+        [:bit_extract, :ternary_cond].each do |op|
+            define_method(op) { |a, b, c| ternary_op(a, b, c, op)}
+        end
 
-
-        private def tmpvar(type); var("_tmp#{next_counter}".to_sym, type); end
+    #----- COMPOUND OPS -----
+        def sll(a, b); bin_op(a, bit_extract(b, 4, 0), :<<) end        
+        def srl(a, b); bin_op(a, bit_extract(b, 4, 0), :>>) end        
+#-----------------------------------------
     end
 end
