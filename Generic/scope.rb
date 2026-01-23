@@ -28,8 +28,18 @@ module SimInfra
 
         # resolve allows to convert Ruby Integer constants to Constant instance
         def resolve_const(what)
-            return what if (what.class== Var) or (what.class== Constant) # or other known classes
-            return Constant.new(self, "const_#{next_counter}", what) if (what.class== Integer)
+            case what
+                when Var, Constant
+                    what
+                when Integer
+                    Constant.new(self, "const_#{next_counter}", what) 
+                else 
+                    what
+            end
+            
+            # return what if (what.class== Var) or (what.class== Constant) # or other known classes
+            # return Constant.new(self, "const_#{next_counter}", what) if (what.class== Integer)
+            # return what if (what.)
         end
 
 #-------- Operators in code tree ---------
@@ -54,9 +64,9 @@ module SimInfra
         # unary
         [:ui8, :ui16, :ui32].each do |op|
             define_method(op) { |a| un_op(a, op) }
-        end        
-    
-        # binary
+        end     
+            
+        # binary #кирпичики, из которых строятся ВСЕ операции, они идут code tree
         [:add, :sub,      # instruction and operation have same representation,
          :xor, :or, :and, # but in their case it is not a problem
 
@@ -65,18 +75,20 @@ module SimInfra
          :se, :ze,   # sign, unsign extension
          :>, :<,     
          :>=, :<=, 
-         :==, :'!='].each do |op|
+         :==, :'!=', 
+         :ternary_cond].each do |op|
             define_method(op) { |a, b| bin_op(a, b, op) }
         end
 
         # ternary
-        [:bit_extract, :ternary_cond].each do |op|
+        [:bit_extract].each do |op|
             define_method(op) { |a, b, c| ternary_op(a, b, c, op)}
         end
 
     #----- COMPOUND OPS -----
         def sll(a, b); bin_op(a, bit_extract(b, 4, 0), :<<) end        
-        def srl(a, b); bin_op(a, bit_extract(b, 4, 0), :>>) end        
+        def srl(a, b); bin_op(a, bit_extract(b, 4, 0), :>>) end     
+        
 #-----------------------------------------
     end
 end
