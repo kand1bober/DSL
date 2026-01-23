@@ -32,8 +32,7 @@ module SimInfra
     class Var
     include SimInfra
 
-        [:add, :sub, :xor, :or, :and, 
-         :sll, :srl, :slt, :sltu, :sra].each do |op|
+        R_ALU_TYPE_INSNS.each do |op|
             define_method(op) { |other| @scope.public_send(op, self, other) }
         end
 

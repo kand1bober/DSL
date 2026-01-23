@@ -72,11 +72,12 @@ module SimInfra
         [:add, :sub,      # instruction and operation have same representation,
          :xor, :or, :and, # but in their case it is not a problem
 
-         :'op_mul', :'op_div', :'op_rem', # '*', '/', '%'
+         :'op_mul', :'op_div_signed', :'op_div_unsign',
+         :'op_rem_signed', :'op_rem_unsign', # '*', '/signed', '/unsign', '%signed', '%unsign'
          :'op_sll', :'op_srl', :'op_sra', # '<<', '>>', '>>>'
          :'equ', :'not_equ', # '==' '!=' 
-         :se, :ze,   # sign, unsign extension
-         :'less_signed', :'less_unsign', # 
+         :se, :ze, # sign, unsign extension
+         :'less_signed', :'less_unsign', 
          :'more_equal_signed', :'more_equal_unsign'].each do |op|
             define_method(op) { |a, b| bin_op(a, b, op) }
         end
@@ -95,6 +96,14 @@ module SimInfra
         def sra(a, b); op_sra(a, bit_extract(b, 4, 0)); end
 
         def mul(a, b); bit_extract(op_mul(i32(a), i32(b)), 31, 0); end
+        def mulh(a, b); bit_extract(op_mul(i32(a), i32(b)), 63, 32); end
+        def mulhsu(a, b); bit_extract(op_mul(i32(a), ui32(b)), 63, 32); end
+        def mulhu(a, b); bit_extract(op_mul(ui32(a), ui32(b)), 63, 32); end
+
+        def div(a, b); op_div_signed(a, b) end
+        def divu(a, b); op_div_unsign(a, b) end
+        def rem(a, b); op_rem_signed(a, b) end
+        def remu(a, b); op_rem_unsign(a, b) end
 
 #-----------------------------------------
     end

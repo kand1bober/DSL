@@ -25,8 +25,6 @@ BASE_OPS = {
         xor: '^', 
 
         op_mul: '*',
-        op_div: '/',
-        op_rem: '%',
 
         op_sll: '<<',
         op_srl: '>>',
@@ -43,6 +41,11 @@ BASE_OPS = {
         i32:  'int32_t'
     },
     self_realized: {
+        op_div_signed: 'div_signed',
+        op_div_unsign: 'div_unsign',
+        op_rem_signed: 'rem_signed',
+        op_rem_unsign: 'rem_unsign',
+
         se: 'sign_extend',
         ze: 'zero_extend',
 
@@ -77,7 +80,7 @@ def interpret_result(stmt, type_sym, val)
             b = stmt.oprnds[2].name.to_s
             str = "#{dst} = (#{a} #{val} #{b})"
         when :prefix
-            str = "#{val} #{stmt.oprnds[0].name} = (#{val})(#{stmt.oprnds[0].name})"
+            str = "#{val} #{stmt.oprnds[0].name} = (#{val})(#{stmt.oprnds[1].name})"
         when :special
             case val
                 when 'ternary'
