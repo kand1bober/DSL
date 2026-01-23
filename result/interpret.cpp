@@ -7,7 +7,7 @@ void exec_add(CPU &cpu, uint32_t num_rd, uint32_t num_rs1, uint32_t num_rs2) {
 	uint32_t rs2;
 	rs2 = cpu.regs[num_rs2];
 	uint32_t _tmp0;
-	_tmp0 = rs1 + rs2;
+	_tmp0 = (rs1 + rs2);
 	rd = _tmp0;
 	cpu.regs[num_rd] = rd;
 }
@@ -19,8 +19,44 @@ void exec_sub(CPU &cpu, uint32_t num_rd, uint32_t num_rs1, uint32_t num_rs2) {
 	uint32_t rs2;
 	rs2 = cpu.regs[num_rs2];
 	uint32_t _tmp1;
-	_tmp1 = rs1 - rs2;
+	_tmp1 = (rs1 - rs2);
 	rd = _tmp1;
+	cpu.regs[num_rd] = rd;
+}
+
+void exec_xor(CPU &cpu, uint32_t num_rd, uint32_t num_rs1, uint32_t num_rs2) {
+	uint32_t rd;
+	uint32_t rs1;
+	rs1 = cpu.regs[num_rs1];
+	uint32_t rs2;
+	rs2 = cpu.regs[num_rs2];
+	uint32_t _tmp2;
+	_tmp2 = (rs1 ^ rs2);
+	rd = _tmp2;
+	cpu.regs[num_rd] = rd;
+}
+
+void exec_or(CPU &cpu, uint32_t num_rd, uint32_t num_rs1, uint32_t num_rs2) {
+	uint32_t rd;
+	uint32_t rs1;
+	rs1 = cpu.regs[num_rs1];
+	uint32_t rs2;
+	rs2 = cpu.regs[num_rs2];
+	uint32_t _tmp3;
+	_tmp3 = (rs1 | rs2);
+	rd = _tmp3;
+	cpu.regs[num_rd] = rd;
+}
+
+void exec_and(CPU &cpu, uint32_t num_rd, uint32_t num_rs1, uint32_t num_rs2) {
+	uint32_t rd;
+	uint32_t rs1;
+	rs1 = cpu.regs[num_rs1];
+	uint32_t rs2;
+	rs2 = cpu.regs[num_rs2];
+	uint32_t _tmp4;
+	_tmp4 = (rs1 & rs2);
+	rd = _tmp4;
 	cpu.regs[num_rd] = rd;
 }
 
@@ -30,11 +66,11 @@ void exec_sll(CPU &cpu, uint32_t num_rd, uint32_t num_rs1, uint32_t num_rs2) {
 	rs1 = cpu.regs[num_rs1];
 	uint32_t rs2;
 	rs2 = cpu.regs[num_rs2];
-	uint32_t _tmp4;
-	_tmp4 = bit_extract(cpu, num_rs2, 4, 0);
-	uint32_t _tmp5;
-	_tmp5 = rs1 << _tmp4;
-	rd = _tmp5;
+	uint32_t _tmp7;
+	_tmp7 = bit_extract(cpu, num_rs2, 4, 0);
+	uint32_t _tmp8;
+	_tmp8 = (rs1 << _tmp7);
+	rd = _tmp8;
 	cpu.regs[num_rd] = rd;
 }
 
@@ -44,10 +80,51 @@ void exec_srl(CPU &cpu, uint32_t num_rd, uint32_t num_rs1, uint32_t num_rs2) {
 	rs1 = cpu.regs[num_rs1];
 	uint32_t rs2;
 	rs2 = cpu.regs[num_rs2];
-	uint32_t _tmp8;
-	_tmp8 = bit_extract(cpu, num_rs2, 4, 0);
-	uint32_t _tmp9;
-	_tmp9 = rs1 >> _tmp8;
-	rd = _tmp9;
+	uint32_t _tmp11;
+	_tmp11 = bit_extract(cpu, num_rs2, 4, 0);
+	uint32_t _tmp12;
+	_tmp12 = (rs1 >> _tmp11);
+	rd = _tmp12;
 	cpu.regs[num_rd] = rd;
 }
+
+void exec_slt(CPU &cpu, uint32_t num_rd, uint32_t num_rs1, uint32_t num_rs2) {
+	uint32_t rd;
+	uint32_t rs1;
+	rs1 = cpu.regs[num_rs1];
+	uint32_t rs2;
+	rs2 = cpu.regs[num_rs2];
+	int32_t rs2 = (int32_t)(rs2);
+	uint32_t _tmp13;
+	_tmp13 = ((rs1 < rs2) ? 1 : 0);
+	rd = _tmp13;
+	cpu.regs[num_rd] = rd;
+}   
+
+void exec_sltu(CPU &cpu, uint32_t num_rd, uint32_t num_rs1, uint32_t num_rs2) {
+	uint32_t rd;
+	uint32_t rs1;
+	rs1 = cpu.regs[num_rs1];
+	uint32_t rs2;
+	rs2 = cpu.regs[num_rs2];
+	uint32_t rs2 = (uint32_t)(rs2);
+	uint32_t _tmp14;
+	_tmp14 = ((rs1 < rs2) ? 1 : 0);
+	rd = _tmp14;
+	cpu.regs[num_rd] = rd;
+}
+
+void exec_sra(CPU &cpu, uint32_t num_rd, uint32_t num_rs1, uint32_t num_rs2) {
+	uint32_t rd;
+	uint32_t rs1;
+	rs1 = cpu.regs[num_rs1];
+	uint32_t rs2;
+	rs2 = cpu.regs[num_rs2];
+	uint32_t _tmp17;
+	_tmp17 = bit_extract(cpu, num_rs2, 4, 0);
+	uint32_t _tmp18;
+	_tmp18 = op_sra(cpu, num_rs1, _tmp17);
+	rd = _tmp18;
+	cpu.regs[num_rd] = rd;
+}
+

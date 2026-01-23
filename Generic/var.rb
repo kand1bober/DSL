@@ -32,11 +32,10 @@ module SimInfra
     class Var
     include SimInfra
 
-        [:add, :sub, :srl, :sll].each do |op|
-            define_method(op) do |other| # ----------> def op(other); @scope.op(self, other); end 
-              @scope.public_send(op, self, other)
-            end
-          end
+        [:add, :sub, :xor, :or, :and, 
+         :sll, :srl, :slt, :sltu, :sra].each do |op|
+            define_method(op) { |other| @scope.public_send(op, self, other) }
+        end
 
     end
 end

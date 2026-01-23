@@ -18,7 +18,7 @@ allowed_classes = [
 
 BASE_OPS = {
     self: [:*, :/, :%, :<<, :>>, :<, :>, :>=, :<=, :==],
-    string: [:'>>>', :'!='],
+    string: [:'!='],
     natural: {
         add: '+',
         sub: '-',
@@ -26,12 +26,25 @@ BASE_OPS = {
         or:  '|',
         xor: '^', 
     },    
-    prefix: [:ui8, :ui16, :ui32], #TODO: как реализовать ternary, ui8/16/32 без вызова функции, а просто в строку
+    prefix: {
+        'ui8':  'uint8_t', 
+        'ui16': 'uint16_t', 
+        'ui32': 'uint32_t', 
+        'i8':   'int8_t', 
+        'i16':  'int16_t',
+        'i32':  'int32_t'
+    },
     self_realized: {
         se: 'sign_extend',
         ze: 'zero_extend',
 
         bit_extract: 'bit_extract',
+        '>>>': 'op_sra',
+
+    },
+    special: {
+        ternary_less: '<',
+        ternary_more: '>',
     }
 }
 
@@ -40,11 +53,12 @@ def find_op(sym)
     # Check arrays
     return [:self, sym] if db[:self].include?(sym)
     return [:string, sym] if db[:string].include?(sym)
-    return [:prefix, sym] if db[:prefix].include?(sym)
+    return [:prefix, db[:prefix][sym]] if db[:prefix].include?(sym)
     
     # Check hash
     return [:natural, db[:natural][sym]] if db[:natural].has_key?(sym)
     return [:self_realized, db[:self_realized][sym]] if db[:self_realized].has_key?(sym)
+    return [:special, db[:special][sym]] if db[:special].has_key?(sym)
     
     return nil
 end
@@ -58,22 +72,26 @@ def interpret_result(stmt, type_sym, val_sym)
                 when :self
                     op = val_sym.to_s
                 when :string
-                    op = val_sym.to_s[1,-2] #throwing out ''
+                    op = val_sym.to_s
                 when :natural
                     op = val_sym
             end
             dst = stmt.oprnds[0].name.to_s
             a = stmt.oprnds[1].name.to_s
             b = stmt.oprnds[2].name.to_s
-            str = "#{dst} = #{a} #{op} #{b}"
+            str = "#{dst} = (#{a} #{op} #{b})"
         when :prefix
-
+            str = "#{val_sym} #{stmt.oprnds[0].name} = (#{val_sym})(#{stmt.oprnds[0].name})"
         when :self_realized
             dst = stmt.oprnds[0].name.to_s
-
             str = "#{dst} = #{val_sym}(cpu#{collect_call_params(stmt)})"
+        when :special
+            dst = stmt.oprnds[0].name.to_s
+            a = stmt.oprnds[1].name.to_s
+            b = stmt.oprnds[2].name.to_s
+            str = "#{dst} = ((#{a} #{val_sym} #{b}) ? 1 : 0)" 
     end
-
+            
     return str
 end
 
@@ -127,7 +145,7 @@ File.open("result/interpret.cpp", "w") do |f|
                 f.puts("\tcpu.regs[num_#{stmt.oprnds[0].name.to_s}] = #{stmt.oprnds[1]};")
             when :let
                 f.puts("\t#{stmt.oprnds[0].name.to_s} = #{stmt.oprnds[1].name.to_s};")
-            when :new_var # var declaration
+            when :new_var
                 f.puts("\tuint32_t #{stmt.oprnds[0].name};")
             when :new_const
             else 

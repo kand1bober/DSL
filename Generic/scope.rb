@@ -58,15 +58,16 @@ module SimInfra
             stmt(op, [tmpvar(a.type), a, b, c])
         end
 
-    #----- BASIC OPS ------
+    #----- BASIC OPS ------ кирпичики, из которых строятся ВСЕ операции, они идут code tree
         # redefine! add & sub will never be the same
         
         # unary
-        [:ui8, :ui16, :ui32].each do |op|
+        [:ui8, :ui16, :ui32,
+         :i8,  :i16,  :i32,].each do |op|
             define_method(op) { |a| un_op(a, op) }
         end     
-            
-        # binary #кирпичики, из которых строятся ВСЕ операции, они идут code tree
+        
+        # binary 
         [:add, :sub,      # instruction and operation have same representation,
          :xor, :or, :and, # but in their case it is not a problem
 
@@ -76,7 +77,7 @@ module SimInfra
          :>, :<,     
          :>=, :<=, 
          :==, :'!=', 
-         :ternary_cond].each do |op|
+         :'ternary_less'].each do |op|
             define_method(op) { |a, b| bin_op(a, b, op) }
         end
 
@@ -88,7 +89,9 @@ module SimInfra
     #----- COMPOUND OPS -----
         def sll(a, b); bin_op(a, bit_extract(b, 4, 0), :<<) end        
         def srl(a, b); bin_op(a, bit_extract(b, 4, 0), :>>) end     
-        
+        def slt(a, b); bin_op(a, i32(b), :'ternary_less'); end
+        def sltu(a, b); bin_op(a, ui32(b), :'ternary_less'); end
+        def sra(a, b); bin_op(a, bit_extract(b, 4, 0), :'>>>') end
 #-----------------------------------------
     end
 end
