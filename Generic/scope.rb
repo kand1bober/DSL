@@ -63,7 +63,8 @@ module SimInfra
         
         # unary
         [:ui8, :ui16, :ui32,
-         :i8,  :i16,  :i32,].each do |op|
+         :i8,  :i16,  :i32,
+         :'ternary'].each do |op|
             define_method(op) { |a| un_op(a, op) }
         end     
         
@@ -71,13 +72,12 @@ module SimInfra
         [:add, :sub,      # instruction and operation have same representation,
          :xor, :or, :and, # but in their case it is not a problem
 
-         :*, :/, :%,
-         :<<, :>>, :'>>>',   # shift left/right, ariphmetical right
+         :'op_mul', :'op_div', :'op_rem', # '*', '/', '%'
+         :'op_sll', :'op_srl', :'op_sra', # '<<', '>>', '>>>'
+         :'equ', :'not_equ', # '==' '!=' 
          :se, :ze,   # sign, unsign extension
-         :==, :'!=', 
-         :'<signed', :'<unsign',
-         :'>=signed', :'>=unsign', 
-         :'ternary'].each do |op|
+         :'less_signed', :'less_unsign', # 
+         :'more_equal_signed', :'more_equal_unsign'].each do |op|
             define_method(op) { |a, b| bin_op(a, b, op) }
         end
 
@@ -87,11 +87,15 @@ module SimInfra
         end
 
     #----- COMPOUND OPS -----
-        def sll(a, b); bin_op(a, bit_extract(b, 4, 0), :<<) end        
-        def srl(a, b); bin_op(a, bit_extract(b, 4, 0), :>>) end     
-        def slt(a, b); un_op(bin_op(a, b, :'<signed'), :'ternary'); end
-        def sltu(a, b); un_op(bin_op(a, b, :'<unsign'), :'ternary'); end
-        def sra(a, b); bin_op(a, bit_extract(b, 4, 0), :'>>>') end
+        def slt(a, b); ternary(less_signed(a, b)); end
+        def sltu(a, b); ternary(less_unsign(a, b)); end
+
+        def sll(a, b); op_sll(a, bit_extract(b, 4, 0)); end        
+        def srl(a, b); op_srl(a, bit_extract(b, 4, 0)); end     
+        def sra(a, b); op_sra(a, bit_extract(b, 4, 0)); end
+
+        def mul(a, b); bit_extract(op_mul(i32(a), i32(b)), 31, 0); end
+
 #-----------------------------------------
     end
 end

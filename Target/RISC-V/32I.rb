@@ -15,8 +15,7 @@ module RV32I
         }
     end
 
-    [:add, :sub, :xor, :or, :and, 
-     :sll, :srl, :slt, :sltu, :sra].each do |name| 
+    R_ALU_TYPE_INSNS.each do |name| 
         make_r_insn(name)
     end
 

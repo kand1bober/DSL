@@ -17,82 +17,75 @@ allowed_classes = [
 ]
 
 BASE_OPS = {
-    self: [:*, :/, :%, :<<, :>>, :==],
-    string: [:'!='],
     natural: {
         add: '+',
         sub: '-',
         and: '&',
         or:  '|',
         xor: '^', 
+
+        op_mul: '*',
+        op_div: '/',
+        op_rem: '%',
+
+        op_sll: '<<',
+        op_srl: '>>',
+        
+        equ: '==',
+        not_equ: '!=',
     },    
     prefix: {
-        'ui8':  'uint8_t', 
-        'ui16': 'uint16_t', 
-        'ui32': 'uint32_t', 
-        'i8':   'int8_t', 
-        'i16':  'int16_t',
-        'i32':  'int32_t'
+        ui8:  'uint8_t', 
+        ui16: 'uint16_t', 
+        ui32: 'uint32_t', 
+        i8:   'int8_t', 
+        i16:  'int16_t',
+        i32:  'int32_t'
     },
     self_realized: {
         se: 'sign_extend',
         ze: 'zero_extend',
 
         bit_extract: 'bit_extract',
-        '>>>': 'op_sra',
+        op_sra: 'op_sra',
         
-        '<signed': 'less_signed',
-        '<unsign': 'less_unsign',
-        '>=signed': 'more_signed',
-        '>=unsign': 'more_unsign',
+        less_signed: 'less_signed',
+        less_unsign: 'less_unsign',
+        more_equal_signed: 'more_equal_signed',
+        more_equal_unsign: 'more_equal_unsign',
     },
     special: {
         ternary: 'ternary'
     }
 }
 
-def find_op(sym) 
-    db = BASE_OPS #only for shorter name; causes changing of constant, if changing db 
-    # Check arrays
-    return [:self, sym] if db[:self].include?(sym)
-    return [:string, sym] if db[:string].include?(sym)
-    return [:prefix, db[:prefix][sym]] if db[:prefix].include?(sym)
-    
-    # Check hash
-    return [:natural, db[:natural][sym]] if db[:natural].has_key?(sym)
-    return [:self_realized, db[:self_realized][sym]] if db[:self_realized].has_key?(sym)
-    return [:special, sym] if db[:special].has_key?(sym)
-
-    return nil
+#return category and string representation
+def find_op(sym)
+    BASE_OPS.each do |category, mapping|
+        return [category, mapping[sym]] if mapping.has_key?(sym)
+    end
+    nil
 end
 
-# type_sym - always sym, val_sym - could be a sym or string(watch BASE_OPS)
-def interpret_result(stmt, type_sym, val_sym)
+# type_sym - always sym, val_sym - string(watch BASE_OPS)
+def interpret_result(stmt, type_sym, val)
     str = String.new()
     case type_sym 
-        when :self, :string, :natural
-            case type_sym
-                when :self
-                    op = val_sym.to_s
-                when :string
-                    op = val_sym.to_s
-                when :natural
-                    op = val_sym
-            end
+        when :natural
             dst = stmt.oprnds[0].name.to_s
             a = stmt.oprnds[1].name.to_s
             b = stmt.oprnds[2].name.to_s
-            str = "#{dst} = (#{a} #{op} #{b})"
+            str = "#{dst} = (#{a} #{val} #{b})"
         when :prefix
-            str = "#{val_sym} #{stmt.oprnds[0].name} = (#{val_sym})(#{stmt.oprnds[0].name})"
+            str = "#{val} #{stmt.oprnds[0].name} = (#{val})(#{stmt.oprnds[0].name})"
         when :special
-            case val_sym
-                when :'ternary'
+            case val
+                when 'ternary'
                     str = "#{stmt.oprnds[0].name} = ((bool)#{stmt.oprnds[1].name}) ? 1 : 0"
             end
         when :self_realized
             dst = stmt.oprnds[0].name.to_s
-            str = "#{dst} = #{val_sym}(cpu#{collect_call_params(stmt)})"
+            str = "#{dst} = #{val}(cpu#{collect_call_params(stmt)})"
     end
 
     return str

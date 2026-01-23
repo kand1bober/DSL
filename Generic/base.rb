@@ -39,10 +39,20 @@ module SimInfra
 end
 
 module SimInfra
-    # R_ALU_INSNS = [
-    #     :add, :sub, :or, :and, :xor,
-    #     :sll, :slt, :sltu, :srl, :sra,
-    #     :mul, :mulh, :mulhsu, :mulhu,
-    #     :div, :divu, :rem, :remu
-    # ]
+    R_ALU_TYPE_INSNS = [:add, :sub, :xor, :or, :and, 
+    :slt, :sltu, :sll, :srl, :sra, 
+    :mul, :mulh, :mulhsu, :mulhu, 
+    :div, :divu, :rem, :remu]
+
+    I_ALU_TYPE_INSNS = [:addi, :xori, :ori, :andi, 
+                        :slti, :sltiu]
+    I_SHIFT_TYPE_INSNS = [:slli, :srli, :srai]
+    I_MEM_TYPE_INSNS = [:lb, :lh, :lw, :lbu, :lhu]
+    I_JUMP_TYPE_INSNS = [:jalr]
+    
+    S_TYPE_INSNS = [:sb, :sh, :sw]
+
+    B_TYPE_INSNS = [:beq, :bne, :blt, :bge, :bltu, :bgeu]
+
+    J_TYPE_INSNS = [:jal]
 end
