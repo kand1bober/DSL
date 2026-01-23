@@ -45,7 +45,7 @@ module SimInfra
 #-------- Operators in code tree ---------
         def un_op(a, op)
             a = resolve_const(a); 
-            stmt(op, [a])
+            stmt(op, [tmpvar(a.type), a])
         end
         def bin_op(a,b, op);
             a = resolve_const(a); b = resolve_const(b)
@@ -74,10 +74,10 @@ module SimInfra
          :*, :/, :%,
          :<<, :>>, :'>>>',   # shift left/right, ariphmetical right
          :se, :ze,   # sign, unsign extension
-         :>, :<,     
-         :>=, :<=, 
          :==, :'!=', 
-         :'ternary_less'].each do |op|
+         :'<signed', :'<unsign',
+         :'>=signed', :'>=unsign', 
+         :'ternary'].each do |op|
             define_method(op) { |a, b| bin_op(a, b, op) }
         end
 
@@ -89,8 +89,8 @@ module SimInfra
     #----- COMPOUND OPS -----
         def sll(a, b); bin_op(a, bit_extract(b, 4, 0), :<<) end        
         def srl(a, b); bin_op(a, bit_extract(b, 4, 0), :>>) end     
-        def slt(a, b); bin_op(a, i32(b), :'ternary_less'); end
-        def sltu(a, b); bin_op(a, ui32(b), :'ternary_less'); end
+        def slt(a, b); un_op(bin_op(a, b, :'<signed'), :'ternary'); end
+        def sltu(a, b); un_op(bin_op(a, b, :'<unsign'), :'ternary'); end
         def sra(a, b); bin_op(a, bit_extract(b, 4, 0), :'>>>') end
 #-----------------------------------------
     end

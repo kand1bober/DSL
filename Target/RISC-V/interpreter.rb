@@ -17,7 +17,7 @@ allowed_classes = [
 ]
 
 BASE_OPS = {
-    self: [:*, :/, :%, :<<, :>>, :<, :>, :>=, :<=, :==],
+    self: [:*, :/, :%, :<<, :>>, :==],
     string: [:'!='],
     natural: {
         add: '+',
@@ -40,11 +40,14 @@ BASE_OPS = {
 
         bit_extract: 'bit_extract',
         '>>>': 'op_sra',
-
+        
+        '<signed': 'less_signed',
+        '<unsign': 'less_unsign',
+        '>=signed': 'more_signed',
+        '>=unsign': 'more_unsign',
     },
     special: {
-        ternary_less: '<',
-        ternary_more: '>',
+        ternary: 'ternary'
     }
 }
 
@@ -58,8 +61,8 @@ def find_op(sym)
     # Check hash
     return [:natural, db[:natural][sym]] if db[:natural].has_key?(sym)
     return [:self_realized, db[:self_realized][sym]] if db[:self_realized].has_key?(sym)
-    return [:special, db[:special][sym]] if db[:special].has_key?(sym)
-    
+    return [:special, sym] if db[:special].has_key?(sym)
+
     return nil
 end
 
@@ -82,16 +85,16 @@ def interpret_result(stmt, type_sym, val_sym)
             str = "#{dst} = (#{a} #{op} #{b})"
         when :prefix
             str = "#{val_sym} #{stmt.oprnds[0].name} = (#{val_sym})(#{stmt.oprnds[0].name})"
+        when :special
+            case val_sym
+                when :'ternary'
+                    str = "#{stmt.oprnds[0].name} = ((bool)#{stmt.oprnds[1].name}) ? 1 : 0"
+            end
         when :self_realized
             dst = stmt.oprnds[0].name.to_s
             str = "#{dst} = #{val_sym}(cpu#{collect_call_params(stmt)})"
-        when :special
-            dst = stmt.oprnds[0].name.to_s
-            a = stmt.oprnds[1].name.to_s
-            b = stmt.oprnds[2].name.to_s
-            str = "#{dst} = ((#{a} #{val_sym} #{b}) ? 1 : 0)" 
     end
-            
+
     return str
 end
 

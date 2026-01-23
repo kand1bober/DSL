@@ -94,12 +94,13 @@ void exec_slt(CPU &cpu, uint32_t num_rd, uint32_t num_rs1, uint32_t num_rs2) {
 	rs1 = cpu.regs[num_rs1];
 	uint32_t rs2;
 	rs2 = cpu.regs[num_rs2];
-	int32_t rs2 = (int32_t)(rs2);
 	uint32_t _tmp13;
-	_tmp13 = ((rs1 < rs2) ? 1 : 0);
-	rd = _tmp13;
+	_tmp13 = less_signed(cpu, num_rs1, num_rs2);
+	uint32_t _tmp14;
+	_tmp14 = ((bool)_tmp13) ? 1 : 0;
+	rd = _tmp14;
 	cpu.regs[num_rd] = rd;
-}   
+}
 
 void exec_sltu(CPU &cpu, uint32_t num_rd, uint32_t num_rs1, uint32_t num_rs2) {
 	uint32_t rd;
@@ -107,10 +108,11 @@ void exec_sltu(CPU &cpu, uint32_t num_rd, uint32_t num_rs1, uint32_t num_rs2) {
 	rs1 = cpu.regs[num_rs1];
 	uint32_t rs2;
 	rs2 = cpu.regs[num_rs2];
-	uint32_t rs2 = (uint32_t)(rs2);
-	uint32_t _tmp14;
-	_tmp14 = ((rs1 < rs2) ? 1 : 0);
-	rd = _tmp14;
+	uint32_t _tmp15;
+	_tmp15 = less_unsign(cpu, num_rs1, num_rs2);
+	uint32_t _tmp16;
+	_tmp16 = ((bool)_tmp15) ? 1 : 0;
+	rd = _tmp16;
 	cpu.regs[num_rd] = rd;
 }
 
@@ -120,11 +122,11 @@ void exec_sra(CPU &cpu, uint32_t num_rd, uint32_t num_rs1, uint32_t num_rs2) {
 	rs1 = cpu.regs[num_rs1];
 	uint32_t rs2;
 	rs2 = cpu.regs[num_rs2];
-	uint32_t _tmp17;
-	_tmp17 = bit_extract(cpu, num_rs2, 4, 0);
-	uint32_t _tmp18;
-	_tmp18 = op_sra(cpu, num_rs1, _tmp17);
-	rd = _tmp18;
+	uint32_t _tmp19;
+	_tmp19 = bit_extract(cpu, num_rs2, 4, 0);
+	uint32_t _tmp20;
+	_tmp20 = op_sra(cpu, num_rs1, _tmp19);
+	rd = _tmp20;
 	cpu.regs[num_rd] = rd;
 }
 

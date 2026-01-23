@@ -12,8 +12,29 @@ uint32_t bit_extract(CPU& cpu_regs, uint32_t src, uint8_t from, uint8_t to)
     return (src & mask) >> to;
 }
 
+bool less_signed(CPU& cpu_regs, uint32_t a, uint32_t b)
+{
+    return (int32_t)a < (int32_t)b;
+}
+
+bool more_signed(CPU& cpu_regs, uint32_t a, uint32_t b)
+{
+    return (int32_t)a > (int32_t)b;
+}
+
+bool less_unsign(CPU& cpu_regs, uint32_t a, uint32_t b)
+{
+    return (uint32_t)a < (uint32_t)b;
+}
+
+bool more_unsign(CPU& cpu_regs, uint32_t a, uint32_t b)
+{
+    return (uint32_t)a > (uint32_t)b;
+}
+
 // operation '>>>' in code tree is sra(shift right ariphmetic)
 uint32_t op_sra(CPU& cpu_regs, uint32_t a, uint32_t b)
 {
 
 }
+
