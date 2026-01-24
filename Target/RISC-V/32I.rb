@@ -7,7 +7,7 @@ module RV32I
     include SimInfra
 
     #---------- R ----------
-    def self.make_r_insn(name)
+    def self.make_r_alu(name)
         Instruction(name, XReg(:rd), XReg(:rs1), XReg(:rs2)) {
             encoding *format_r_alu(name.to_s.downcase.to_sym, rd, rs1, rs2)
             asm { "#{name} #{rd}, #{rs1}, #{rs2}" }
@@ -16,11 +16,21 @@ module RV32I
     end
 
     R_ALU_TYPE_INSNS.each do |name| 
-        make_r_insn(name)
+        make_r_alu(name)
     end
 
     #---------- I ----------
+    def self.make_i_alu(name)
+        Instruction(name, XReg(:rd), XReg(:rs1), Imm()) {
+            encoding *format_i_alu(name.to_s.downcase.to_sym, rd, rs1)
+            asm { "#{name} #{rd}, #{rs1}, #{imm}" }
+            code { rd[]= rs1.send(name, imm) }                       
+        }
+    end
 
+    I_ALU_TYPE_INSNS.each do |name|
+        make_i_alu(name)
+    end
 
     #---------- S ----------
 

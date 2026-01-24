@@ -64,7 +64,7 @@ module SimInfra
     end
     
     #----- I -----
-    def format_i_alu(name, rs1, rd)
+    def format_i_alu(name, rd, rs1)
         funct3 =
         {
             addi:  [0],
@@ -77,7 +77,7 @@ module SimInfra
         format_i(rs1, funct3, rd, 0b0010011)
     end
 
-    def format_i_mem(name, rs1, rd) 
+    def format_i_mem(name, rd, rs1) 
         funct3 =
         {
             lb:  [0],

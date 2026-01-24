@@ -28,11 +28,13 @@ module SimInfra
         def let(other); raise "Assign to constant"; end
         def inspect; "#{@name}:#{@type} (#{@scope.object_id}) {=#{@const}}"; end
     end
-    #
+end
+
+module SimInfra 
     class Var
     include SimInfra
 
-        R_ALU_TYPE_INSNS.each do |op|
+        (R_ALU_TYPE_INSNS + I_ALU_TYPE_INSNS).each do |op|
             define_method(op) { |other| @scope.public_send(op, self, other) }
         end
 

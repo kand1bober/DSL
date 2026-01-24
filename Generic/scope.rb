@@ -37,10 +37,9 @@ module SimInfra
                     what
             end
             
-            # return what if (what.class== Var) or (what.class== Constant) # or other known classes
-            # return Constant.new(self, "const_#{next_counter}", what) if (what.class== Integer)
-            # return what if (what.)
         end
+
+        #imm -- такой операд как регистр, отличие лишь в том, что ему не нужен getreg
 
 #-------- Operators in code tree ---------
         def un_op(a, op)
@@ -88,6 +87,7 @@ module SimInfra
         end
 
     #----- COMPOUND OPS -----
+        #----- R -----
         def slt(a, b); ternary(less_signed(a, b)); end
         def sltu(a, b); ternary(less_unsign(a, b)); end
 
@@ -104,6 +104,31 @@ module SimInfra
         def divu(a, b); op_div_unsign(a, b) end
         def rem(a, b); op_rem_signed(a, b) end
         def remu(a, b); op_rem_unsign(a, b) end
+
+        #----- I -----
+            #--- I_ALU ---
+        def addi(a, b); add(a, se(b, 12)); end
+        def xori(a, b); xor(a, se(b, 12)); end
+        def ori(a, b); send(:or, a, se(b, 12)); end
+        def andi(a, b); send(:and, a, se(b, 12)); end
+
+        def slti(a, b); slt(a, se(b, 12)); end
+        def sltiu(a, b); sltu(a, se(b, 12)); end
+            #--- I_SHIFT ---
+    
+            #--- I_MEM ---
+
+        #----- S -----
+
+
+        #----- B -----
+
+
+        #----- U -----
+
+
+        #----- J -----
+
 
 #-----------------------------------------
     end

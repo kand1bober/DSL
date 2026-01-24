@@ -9,8 +9,10 @@ require 'yaml'
 allowed_classes = [
     Symbol,
     SimInfra::Field,
+    SimInfra::ImmFieldPart,
     SimInfra::Var,
     SimInfra::XReg,
+    SimInfra::Imm,
     SimInfra::Scope,
     SimInfra::IrStmt,
     SimInfra::Constant,
@@ -35,9 +37,9 @@ BASE_OPS = {
     prefix: {
         ui8:  'uint8_t', 
         ui16: 'uint16_t', 
-        ui32: 'uint32_t', 
+        ui32: 'Register', 
         i8:   'int8_t', 
-        i16:  'int16_t',
+        i16:  'SignedRegister',
         i32:  'int32_t'
     },
     self_realized: {
@@ -115,7 +117,7 @@ end
 def collect_formal_params(insn)
     params = String.new() 
     insn[:args].each do |arg|
-        params << ", uint32_t num_#{arg.name.to_s}"
+        params << ", Register num_#{arg.name.to_s}"
     end
 
     return params
@@ -138,6 +140,8 @@ File.open("result/interpret.cpp", "w") do |f|
         # result = find_op(stmt.name)
         # puts "#{result}"
         case stmt.name
+            when :getimm
+                f.puts("\t#{stmt.oprnds[0]} = num_#{stmt.oprnds[1].name.to_s};")
             when :getreg
                 f.puts("\t#{stmt.oprnds[0]} = cpu.regs[num_#{stmt.oprnds[1].name.to_s}];")
             when :setreg
@@ -145,7 +149,7 @@ File.open("result/interpret.cpp", "w") do |f|
             when :let
                 f.puts("\t#{stmt.oprnds[0].name.to_s} = #{stmt.oprnds[1].name.to_s};")
             when :new_var
-                f.puts("\tuint32_t #{stmt.oprnds[0].name};")
+                f.puts("\tRegister #{stmt.oprnds[0].name};")
             when :new_const
             else 
                 if (result = find_op(stmt.name))

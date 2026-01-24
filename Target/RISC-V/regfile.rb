@@ -11,6 +11,20 @@ module SimInfra
             @name.to_s
         end
     end
-
+    
     def XReg(name); XReg.new(name); end
+
+    class Imm
+        attr_reader :name, :len
+        def initialize()
+            @name = :imm
+            return name
+        end
+
+        def to_s
+            return @name
+        end
+    end
+
+    def Imm(); Imm.new(); end
 end

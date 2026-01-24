@@ -5,15 +5,25 @@
 #ifndef OPERATIONS_HEADER
 #define OPERATIONS_HEADER 
 
-struct CPU { std::array<uint32_t,32> regs; };
+typedef uint32_t Register;
+typedef int32_t  SignedRegister;
 
-uint32_t bit_extract(CPU& cpu_regs, uint32_t src, uint8_t from, uint8_t to);
+struct CPU { std::array<Register,32> regs; };
 
-bool less_signed(CPU& cpu_regs, uint32_t a, uint32_t b);
-bool more_equal_signed(CPU& cpu_regs, uint32_t a, uint32_t b);
-bool less_unsign(CPU& cpu_regs, uint32_t a, uint32_t b);
-bool more_equal_unsign(CPU& cpu_regs, uint32_t a, uint32_t b);
+Register bit_extract(CPU& cpu_regs, Register src, Register from, Register to);
 
-uint32_t op_sra(CPU& cpu_regs, uint32_t a, uint32_t b);
+bool less_signed(CPU& cpu_regs, Register a, Register b);
+bool more_equal_signed(CPU& cpu_regs, Register a, Register b);
+bool less_unsign(CPU& cpu_regs, Register a, Register b);
+bool more_equal_unsign(CPU& cpu_regs, Register a, Register b);
+
+Register div_signed(CPU& cpu_regs, Register a, Register b);
+Register div_unsign(CPU& cpu_regs, Register a, Register b);
+Register rem_signed(CPU& cpu_regs, Register a, Register b);
+Register rem_unsign(CPU& cpu_regs, Register a, Register b);
+
+Register op_sra(CPU& cpu_regs, Register a, Register b);
+
+Register sign_extend(CPU& cpu_regs, Register a, Register b);
 
 #endif
