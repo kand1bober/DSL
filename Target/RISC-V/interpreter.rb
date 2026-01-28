@@ -15,6 +15,7 @@ allowed_classes = [
     SimInfra::Imm,
     SimInfra::Scope,
     SimInfra::IrStmt,
+    SimInfra::IrExpr,
     SimInfra::Constant,
 ]
 
@@ -34,23 +35,15 @@ BASE_OPS = {
         equ: '==',
         not_equ: '!=',
     },    
-    prefix: {
-        ui8:  'uint8_t', 
-        ui16: 'uint16_t', 
-        ui32: 'Register', 
-        i8:   'int8_t', 
-        i16:  'int16_t',
-        i32:  'SignedRegister'
-    },
     self_realized: {
         op_div_signed: 'div_signed',
         op_div_unsign: 'div_unsign',
         op_rem_signed: 'rem_signed',
         op_rem_unsign: 'rem_unsign',
-
+        
         se: 'sign_extend',
         ze: 'zero_extend',
-
+        
         bit_extract: 'bit_extract',
         op_sra: 'op_sra',
         
@@ -59,10 +52,17 @@ BASE_OPS = {
         more_equal_signed: 'more_equal_signed',
         more_equal_unsign: 'more_equal_unsign',
     },
-    special: {
+    unary: { # --- here are expressions, not statement
+        ui8:  'uint8_t', 
+        ui16: 'uint16_t', 
+        ui32: 'Register', 
+        i8:   'int8_t', 
+        i16:  'int16_t',
+        i32:  'SignedRegister',
         ternary: 'ternary'
     }
 }
+
 
 #return category and string representation
 def find_op(sym)
@@ -72,49 +72,66 @@ def find_op(sym)
     nil
 end
 
-# type_sym - always sym, val_sym - string(watch BASE_OPS)
-def interpret_result(stmt, type_sym, val)
+# op_type - always sym, val_sym - string(watch BASE_OPS)
+def interpret_result(code, op_type, op_val)
+    puts "1) op_type = #{op_type}\nop_val = #{op_val}"
     str = String.new()
-    case type_sym 
+    case op_type 
         when :natural
-            dst = stmt.oprnds[0].name.to_s
-            a = stmt.oprnds[1].name.to_s
-            b = stmt.oprnds[2].name.to_s
-            str = "#{dst} = (#{a} #{val} #{b})"
-        when :prefix
-            str = "#{stmt.oprnds[0].name} = (#{val})(#{stmt.oprnds[1].name})"
-        when :special
-            case val
-                when 'ternary'
-                    str = "#{stmt.oprnds[0].name} = ((bool)#{stmt.oprnds[1].name}) ? 1 : 0"
-            end
+            dst = get_operand_val(code.oprnds[0])
+            a = get_operand_val(code.oprnds[1])
+            b = get_operand_val(code.oprnds[2])
+            str = "#{dst} = (#{a} #{op_val} #{b})"
+        # when :prefix
+        #     str = "#{code.oprnds[0].name} = (#{op_val})(#{code.oprnds[1].name})"
+        # when :special
+        #     case op_val
+        #         when 'ternary'
+        #             str = "#{get_operand_val(code.oprnds[0])} = ((bool)#{get_operand_val(code.oprnds[1])}) ? 1 : 0"
+        #     end
         when :self_realized
-            dst = stmt.oprnds[0].name.to_s
-            str = "#{dst} = #{val}(cpu#{collect_call_params(stmt)})"
+            dst = get_operand_val(code.oprnds[0])
+            str = "#{dst} = #{op_val}(cpu#{get_call_params(code)})"
     end
-
     return str
 end
 
-def collect_call_params(stmt) 
+# get info about operand. returns string with value
+def get_operand_val(oprnd)
+    case oprnd
+        when SimInfra::Var
+            return oprnd.name.to_s
+        when SimInfra::Constant
+            return oprnd.value.to_s
+        when SimInfra::IrExpr
+            #recursion untill Var/Const
+            op_type, op_val = find_op(oprnd.name.to_sym)
+            puts "2) op_type = #{op_type}\nop_val = #{op_val}\n\n"
+            if (op_type == :unary)
+                case oprnd.name.to_sym
+                    when :ternary
+                        return "((bool)(#{get_operand_val(oprnd.oprnds[0])}) ? 1 : 0)"
+                    else #type castings
+                        return "(#{op_val})(#{get_operand_val(oprnd.oprnds[0])})"
+                end 
+            else 
+                raise "Undefined behaviour"    
+            end
+        when SimInfra::IrStmt
+
+    end
+end
+
+def get_call_params(stmt) 
     params = String.new() 
     stmt[:oprnds][1..-1].each do |oprnd|
-        case oprnd
-            when SimInfra::Var
-                if oprnd.name[0] != '_'
-                    params << ", num_#{oprnd.name}"
-                else 
-                    params << ", #{oprnd.name}"       
-                end                         
-            when SimInfra::Constant
-                params << ", #{oprnd.value}"
-        end
+        params << ", #{get_operand_val(oprnd)}"
     end
 
     return params
 end
 
-def collect_formal_params(insn)
+def get_formal_params(insn)
     params = String.new() 
     insn[:args].each do |arg|
         params << ", Register num_#{arg.name.to_s}"
@@ -133,33 +150,40 @@ File.open("result/interpret.cpp", "w") do |f|
     # for each insn from IR tree
     ir_list.each do |insn|
         name = insn[:name].to_s
-        f.puts("void exec_#{name}(CPU &cpu#{collect_formal_params(insn)}) {")
+        f.puts("void exec_#{name}(CPU &cpu#{get_formal_params(insn)}) {")
 
+        puts "  #{name}"
         # for each stmt from code tree of this insn
-        insn[:code].tree.each do |stmt|
-        # result = find_op(stmt.name)
+        insn[:code].tree.each do |code|
+        # result = find_op(code.name)
         # puts "#{result}"
-        case stmt.name
-            when :getimm
-                f.puts("\t#{stmt.oprnds[0]} = num_#{stmt.oprnds[1].name.to_s};")
-            when :getreg
-                f.puts("\t#{stmt.oprnds[0]} = cpu.regs[num_#{stmt.oprnds[1].name.to_s}];")
-            when :setreg
-                f.puts("\tcpu.regs[num_#{stmt.oprnds[0].name.to_s}] = #{stmt.oprnds[1]};")
-            when :let
-                f.puts("\t#{stmt.oprnds[0].name.to_s} = #{stmt.oprnds[1].name.to_s};")
-            when :new_var
-                f.puts("\tRegister #{stmt.oprnds[0].name};")
-            when :new_const
-            else 
-                if (result = find_op(stmt.name))
-                    f.puts("\t#{interpret_result(stmt, *result)};")                
-                else 
-                    raise("Unknown statement in code tree: #{stmt.name}")
-                end
-            end
+        if (code.class == SimInfra::IrStmt)
+            case code.name
+                when :getimm
+                    f.puts("\t#{code.oprnds[0]} = num_#{code.oprnds[1].name.to_s};")
+                when :getreg
+                    f.puts("\t#{code.oprnds[0]} = cpu.regs[num_#{code.oprnds[1].name.to_s}];")
+                when :setreg
+                    f.puts("\tcpu.regs[num_#{code.oprnds[0].name.to_s}] = #{code.oprnds[1]};")
+                when :let
+                    f.puts("\t#{code.oprnds[0].name.to_s} = #{code.oprnds[1].name.to_s};")
+                when :new_var
+                    f.puts("\tRegister #{code.oprnds[0].name};")
+                when :new_const 
+                else #special operations
+                    if (result = find_op(code.name))
+                        f.puts("\t#{interpret_result(code, *result)};")                
+                    else 
+                        raise("Unknown statement in code tree: #{code.name}")
+                    end
+            end    
+        elsif (code.class == SimInfra::IrExpr) 
+            # skip
+        else 
+            puts "Unknown piece of code, it is not a statement nor expression"
         end
-
+            
+        end
         f.puts("}\n\n")
     end
 end

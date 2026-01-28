@@ -64,8 +64,7 @@ module SimInfra
         
         # unary
         [:ui8, :ui16, :ui32,
-         :i8,  :i16,  :i32,
-         :'ternary'].each do |op|
+         :i8,  :i16,  :i32].each do |op|
             define_method(op) { |a| un_op(a, op) }
         end     
         
@@ -84,14 +83,14 @@ module SimInfra
         end
 
         # ternary
-        [:bit_extract].each do |op|
+        [:bit_extract, :ternary].each do |op|
             define_method(op) { |a, b, c| ternary_op(a, b, c, op)}
         end
 
     #----- COMPOUND OPS -----
         #----- R -----
-        def slt(a, b); ternary(less_signed(a, b)); end
-        def sltu(a, b); ternary(less_unsign(a, b)); end
+        def slt(a, b); ternary(less_signed(a, b), 1, 0); end
+        def sltu(a, b); ternary(less_unsign(a, b), 1, 0); end
 
         def sll(a, b); op_sll(a, bit_extract(b, 4, 0)); end        
         def srl(a, b); op_srl(a, bit_extract(b, 4, 0)); end     
