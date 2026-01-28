@@ -39,8 +39,8 @@ BASE_OPS = {
         ui16: 'uint16_t', 
         ui32: 'Register', 
         i8:   'int8_t', 
-        i16:  'SignedRegister',
-        i32:  'int32_t'
+        i16:  'int16_t',
+        i32:  'SignedRegister'
     },
     self_realized: {
         op_div_signed: 'div_signed',
@@ -82,7 +82,7 @@ def interpret_result(stmt, type_sym, val)
             b = stmt.oprnds[2].name.to_s
             str = "#{dst} = (#{a} #{val} #{b})"
         when :prefix
-            str = "#{val} #{stmt.oprnds[0].name} = (#{val})(#{stmt.oprnds[1].name})"
+            str = "#{stmt.oprnds[0].name} = (#{val})(#{stmt.oprnds[1].name})"
         when :special
             case val
                 when 'ternary'

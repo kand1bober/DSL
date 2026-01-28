@@ -137,9 +137,9 @@ void exec_mul(CPU &cpu, Register num_rd, Register num_rs1, Register num_rs2) {
 	Register rs2;
 	rs2 = cpu.regs[num_rs2];
 	Register _tmp21;
-	int32_t _tmp21 = (int32_t)(rs1);
+	_tmp21 = (SignedRegister)(rs1);
 	Register _tmp22;
-	int32_t _tmp22 = (int32_t)(rs2);
+	_tmp22 = (SignedRegister)(rs2);
 	Register _tmp23;
 	_tmp23 = (_tmp21 * _tmp22);
 	Register _tmp26;
@@ -155,9 +155,9 @@ void exec_mulh(CPU &cpu, Register num_rd, Register num_rs1, Register num_rs2) {
 	Register rs2;
 	rs2 = cpu.regs[num_rs2];
 	Register _tmp27;
-	int32_t _tmp27 = (int32_t)(rs1);
+	_tmp27 = (SignedRegister)(rs1);
 	Register _tmp28;
-	int32_t _tmp28 = (int32_t)(rs2);
+	_tmp28 = (SignedRegister)(rs2);
 	Register _tmp29;
 	_tmp29 = (_tmp27 * _tmp28);
 	Register _tmp32;
@@ -173,9 +173,9 @@ void exec_mulhsu(CPU &cpu, Register num_rd, Register num_rs1, Register num_rs2) 
 	Register rs2;
 	rs2 = cpu.regs[num_rs2];
 	Register _tmp33;
-	int32_t _tmp33 = (int32_t)(rs1);
+	_tmp33 = (SignedRegister)(rs1);
 	Register _tmp34;
-	Register _tmp34 = (Register)(rs2);
+	_tmp34 = (Register)(rs2);
 	Register _tmp35;
 	_tmp35 = (_tmp33 * _tmp34);
 	Register _tmp38;
@@ -191,9 +191,9 @@ void exec_mulhu(CPU &cpu, Register num_rd, Register num_rs1, Register num_rs2) {
 	Register rs2;
 	rs2 = cpu.regs[num_rs2];
 	Register _tmp39;
-	Register _tmp39 = (Register)(rs1);
+	_tmp39 = (Register)(rs1);
 	Register _tmp40;
-	Register _tmp40 = (Register)(rs2);
+	_tmp40 = (Register)(rs2);
 	Register _tmp41;
 	_tmp41 = (_tmp39 * _tmp40);
 	Register _tmp44;

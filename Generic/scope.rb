@@ -20,10 +20,15 @@ module SimInfra
 
         private def tmpvar(type); var("_tmp#{next_counter}".to_sym, type); end
         
-        # stmt adds statement into tree and returns operand[0]? which is scope
+        # stmt adds statement into tree and returns operand[0], which is name
         # which result in near all cases
         def stmt(name, operands, attrs= nil);
-            @tree << IrStmt.new(name, operands, attrs); operands[0]
+            @tree << IrStmt.new(name, operands, attrs); 
+            return operands[0]
+        end
+        def expr(name, operands, attrs=nil)
+            @tree << IrExpr.new(name, operands, attrs); 
+            return @tree.last
         end
 
         # resolve allows to convert Ruby Integer constants to Constant instance
@@ -36,15 +41,12 @@ module SimInfra
                 else 
                     what
             end
-            
         end
-
-        #imm -- такой операд как регистр, отличие лишь в том, что ему не нужен getreg
 
 #-------- Operators in code tree ---------
         def un_op(a, op)
             a = resolve_const(a); 
-            stmt(op, [tmpvar(a.type), a])
+            expr(op, [a])
         end
         def bin_op(a,b, op);
             a = resolve_const(a); b = resolve_const(b)
@@ -104,7 +106,7 @@ module SimInfra
         def divu(a, b); op_div_unsign(a, b) end
         def rem(a, b); op_rem_signed(a, b) end
         def remu(a, b); op_rem_unsign(a, b) end
-
+        
         #----- I -----
             #--- I_ALU ---
         def addi(a, b); add(a, se(b, 12)); end

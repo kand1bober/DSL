@@ -14,6 +14,8 @@ module RV32I
             code { rd[]= rs1.send(name, rs2) } #call for rs1 method with "name", passing rs2 as argument                      
         }
     end
+    
+    # Rtype = [ { "enc" : 0b010000 , "asm" : "ADD", "code" :  Op.add }, { ... }, { ... } ]
 
     R_ALU_TYPE_INSNS.each do |name| 
         make_r_alu(name)

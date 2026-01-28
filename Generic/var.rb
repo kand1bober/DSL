@@ -2,6 +2,23 @@ require_relative "base"
 
 module SimInfra
     IrStmt = Struct.new(:name, :oprnds, :attrs)
+    class IrExpr
+        attr_reader :name, :oprnd, :attrs
+
+        def initialize(name, oprnd, attrs)
+            @name, @oprnd, @attrs = name, oprnd, attrs
+        end
+
+        def type()
+            cur = @oprnd[0]
+            while (cur.class != Var)
+                cur = cur.oprnd[0]
+            end
+
+            return cur.type
+        end
+    end
+
     class Var
         attr_reader :scope, :name, :type
         def initialize(scope, name, type)
