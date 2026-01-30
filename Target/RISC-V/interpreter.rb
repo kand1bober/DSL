@@ -52,6 +52,9 @@ BASE_OPS = {
         more_equal_signed: 'more_equal_signed',
         more_equal_unsign: 'more_equal_unsign',
     },
+    special: {
+        ternary: 'ternary',
+    },
     unary: { # --- here are expressions, not statement
         ui8:  'uint8_t', 
         ui16: 'uint16_t', 
@@ -59,7 +62,6 @@ BASE_OPS = {
         i8:   'int8_t', 
         i16:  'int16_t',
         i32:  'SignedRegister',
-        ternary: 'ternary'
     }
 }
 
@@ -72,9 +74,8 @@ def find_op(sym)
     nil
 end
 
-# op_type - always sym, val_sym - string(watch BASE_OPS)
+# op_type - always sym, op_val - string(watch BASE_OPS)
 def interpret_result(code, op_type, op_val)
-    puts "1) op_type = #{op_type}\nop_val = #{op_val}"
     str = String.new()
     case op_type 
         when :natural
@@ -82,13 +83,14 @@ def interpret_result(code, op_type, op_val)
             a = get_operand_val(code.oprnds[1])
             b = get_operand_val(code.oprnds[2])
             str = "#{dst} = (#{a} #{op_val} #{b})"
-        # when :prefix
-        #     str = "#{code.oprnds[0].name} = (#{op_val})(#{code.oprnds[1].name})"
-        # when :special
-        #     case op_val
-        #         when 'ternary'
-        #             str = "#{get_operand_val(code.oprnds[0])} = ((bool)#{get_operand_val(code.oprnds[1])}) ? 1 : 0"
-        #     end
+        when :special
+            case op_val
+                when 'ternary' 
+                    str = "#{get_operand_val(code.oprnds[0])} = " + 
+                           "((bool)#{get_operand_val(code.oprnds[1])}) ? " + 
+                           "(#{get_operand_val(code.oprnds[2])}) : " + 
+                           "(#{get_operand_val(code.oprnds[3])})"
+            end
         when :self_realized
             dst = get_operand_val(code.oprnds[0])
             str = "#{dst} = #{op_val}(cpu#{get_call_params(code)})"
@@ -106,19 +108,11 @@ def get_operand_val(oprnd)
         when SimInfra::IrExpr
             #recursion untill Var/Const
             op_type, op_val = find_op(oprnd.name.to_sym)
-            puts "2) op_type = #{op_type}\nop_val = #{op_val}\n\n"
             if (op_type == :unary)
-                case oprnd.name.to_sym
-                    when :ternary
-                        return "((bool)(#{get_operand_val(oprnd.oprnds[0])}) ? 1 : 0)"
-                    else #type castings
-                        return "(#{op_val})(#{get_operand_val(oprnd.oprnds[0])})"
-                end 
+                return "(#{op_val})(#{get_operand_val(oprnd.oprnds[0])})"
             else 
                 raise "Undefined behaviour"    
             end
-        when SimInfra::IrStmt
-
     end
 end
 
@@ -151,12 +145,9 @@ File.open("result/interpret.cpp", "w") do |f|
     ir_list.each do |insn|
         name = insn[:name].to_s
         f.puts("void exec_#{name}(CPU &cpu#{get_formal_params(insn)}) {")
-
-        puts "  #{name}"
+        
         # for each stmt from code tree of this insn
         insn[:code].tree.each do |code|
-        # result = find_op(code.name)
-        # puts "#{result}"
         if (code.class == SimInfra::IrStmt)
             case code.name
                 when :getimm

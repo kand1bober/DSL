@@ -55,5 +55,10 @@ module SimInfra
             define_method(op) { |other| @scope.public_send(op, self, other) }
         end
 
+        B_TYPE_INSNS.each do |op| 
+            define_method(op) { |a, b, c, pc| @scope.public_send(op, a, b, c, pc) }
+        end
+
+        
     end
 end

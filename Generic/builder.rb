@@ -47,15 +47,23 @@ module SimInfra
                     scope.stmt(:getreg, [arg.name, arg])
                 elsif [:imm].include?(arg.name)
                     scope.stmt(:getimm, [arg.name, arg])
+                elsif[:pc].include?(arg.name)
+                    scope.stmt(:getpc, [arg.name, arg])                    
                 end
             end
 
             scope.instance_eval(&block)
 
-            dst_arg = @info.args.find { |a| a.name == :rd }
-            if dst_arg
-                scope.stmt(:setreg, [dst_arg, dst_arg.name])
+            dst_arg = @info.args.find { |a| [:rd, :pc].include?(a.name) }
+            case dst_arg.name
+                when :rd 
+                    scope.stmt(:setreg, [dst_arg, dst_arg.name])
+                when :pc
+                    scope.stmt(:setpc, [dst_arg, dst_arg.name])                            
             end
+
+            # в interpret при первом проходе скипаем :setreg, все остальное записываем
+            # при втором проходе обрабатываем cond_op и setreg
         end
     end
 end

@@ -14,7 +14,7 @@ module SimInfra
             field(:funct3, 14, 12, funct3),
         ]
     end
-
+    
     def format_i(rs1, funct3, rd, opcode) 
         return :I, [
             field(rd.name, 11, 7, :reg),
