@@ -8,7 +8,10 @@
 typedef uint32_t Register;
 typedef int32_t  SignedRegister;
 
-struct CPU { std::array<Register,32> regs; };
+struct CPU { 
+    std::array<Register,32> regs; 
+    uint32_t pc;
+};
 
 Register bit_extract(CPU& cpu_regs, Register src, Register from, Register to);
 

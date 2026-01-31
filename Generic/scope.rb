@@ -138,11 +138,11 @@ module SimInfra
             #--- I_MEM ---
         # these operations can also be described as 'op(a, imm, b)' but without 
         # 'list_op()' and 'rd[]=' parts by writing 'rd=' in field 'code' in Target  
-        # def lb(a, imm, b) list_op() { rd[]= } end 
-        # def lh(a, imm, b) end
-        # def lw(a, imm, b) end
-        # def lbu(a, imm, b) end
-        # def lhu(a, imm, b) end
+        def lb(a, imm, b) list_op() end 
+        def lh(a, imm, b) end
+        def lw(a, imm, b) end
+        def lbu(a, imm, b) end
+        def lhu(a, imm, b) end
             #--- I_JUMP ---
         def jalr(a, imm, b, pc) list_op() { rd[]= add(pc, 4) 
                                             pc[]= send(:and, add(b, se(imm, 12)), ~0x1)} end
