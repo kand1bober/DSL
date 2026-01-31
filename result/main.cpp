@@ -2,6 +2,8 @@
 
 int main()
 {
-    
+    SPU machine;
+
+
     return 0;
 }

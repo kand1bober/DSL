@@ -57,13 +57,21 @@ BASE_OPS = {
         ternary: 'ternary',
         cond_op: 'if',
     },
-    unary: { # --- here are expressions, not statement
+        unary: { # --- here are expressions, not statement
         ui8:  'uint8_t', 
         ui16: 'uint16_t', 
         ui32: 'Register', 
         i8:   'int8_t', 
         i16:  'int16_t',
-        i32:  'SignedRegister',
+        i32:  'int32_t',
+    },
+    unary_prefix: {
+        deref: '*',
+    },
+    unary_mem: {
+        ref8: 'uint8_t*',
+        ref16: 'uint16_t*',
+        ref32: 'uint32_t*',
     }
 }
 
@@ -99,7 +107,7 @@ def interpret_result(code, op_type, op_val)
             end
         when :self_realized
             dst = get_operand_val(code.oprnds[0])
-            str = "#{dst} = #{op_val}(cpu#{get_call_params(code)})"
+            str = "#{dst} = #{op_val}(spu#{get_call_params(code)})"
     end
     return str
 end
@@ -116,6 +124,10 @@ def get_operand_val(oprnd)
             op_type, op_val = find_op(oprnd.name.to_sym)
             if (op_type == :unary)
                 return "(#{op_val})(#{get_operand_val(oprnd.oprnds[0])})"
+            elsif (op_type == :unary_mem)
+                return "(#{op_val})(#{get_operand_val(oprnd.oprnds[0])} + &spu.mem.data)"
+            elsif (op_type == :unary_prefix)
+                return "#{op_val}(#{get_operand_val(oprnd.oprnds[0])})"
             else 
                 raise "Undefined behaviour"    
             end
@@ -162,7 +174,7 @@ File.open("result/interpret.cpp", "w") do |f|
     # for each insn from IR tree
     ir_list.each do |insn|
         name = insn[:name].to_s
-        f.puts("void exec_#{name}(CPU &cpu#{get_formal_params(insn)}) {")
+        f.puts("void exec_#{name}(SPU &spu#{get_formal_params(insn)}) {")
 
         # 0th -- save :let stmt ids, that are used in cond_op, to skip interpreting them on 1st cycle 
         # 2nd -- interpret setting of registers (:setpc, :setreg for :rd)
@@ -174,7 +186,7 @@ File.open("result/interpret.cpp", "w") do |f|
                     case code.name
                         when :getpc
                             if (i == 1)
-                                f.puts("\t#{code.oprnds[1]} = cpu.#{code.oprnds[0].name.to_s};")                                
+                                f.puts("\t#{code.oprnds[1]} = spu.cpu.#{code.oprnds[0].name.to_s};")                                
                             end
                         when :getimm 
                             if (i == 1)  
@@ -182,7 +194,7 @@ File.open("result/interpret.cpp", "w") do |f|
                             end
                         when :getreg
                             if (i == 1) 
-                                f.puts("\t#{code.oprnds[0]} = cpu.regs[par_#{code.oprnds[1].name.to_s}];")
+                                f.puts("\t#{code.oprnds[0]} = spu.cpu.regs[par_#{code.oprnds[1].name.to_s}];")
                             end
                         when :let
                             if (i == 1)
@@ -200,11 +212,11 @@ File.open("result/interpret.cpp", "w") do |f|
                             # skip
                         when :setreg
                             if (i == 2)
-                                f.puts("\tcpu.regs[par_#{code.oprnds[0].name.to_s}] = #{code.oprnds[1]};")
+                                f.puts("\tspu.cpu.regs[par_#{code.oprnds[0].name.to_s}] = #{code.oprnds[1]};")
                             end
                         when :setpc
                             if (i == 2)
-                                f.puts("\tcpu.#{code.oprnds[0].name.to_s} = #{code.oprnds[1]};")
+                                f.puts("\tspu.cpu.#{code.oprnds[0].name.to_s} = #{code.oprnds[1]};")
                             end
                         else # special operations
                             if ((code.name != :cond_op && i == 1) || 

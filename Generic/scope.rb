@@ -69,10 +69,18 @@ module SimInfra
         # it is possible to make unary operations with the choice of constants, 
         # then you need another type of operation.
         [:ui8, :ui16, :ui32,
-         :i8,  :i16,  :i32, 
-         :mem8, :mem16, :mem32].each do |op|
+         :i8,  :i16,  :i32,
+         :deref, # dereference pointer
+         :ref8, :ref16, :ref32, # make pointer
+        ].each do |op|
             define_method(op) { |a| un_op(a, op) }
         end     
+
+        [8, 16, 32].each do |num| 
+            mem_name = "mem" + num.to_s
+            ref_name = "ref" + num.to_s
+            define_method(mem_name) { |a| deref(send(ref_name, a)) } # take value from addr
+        end
         
         # binary 
         [:add, :sub,      # instruction and operation have same representation,
@@ -151,8 +159,8 @@ module SimInfra
                                             pc[]= send(:and, add(b, se(imm, 12)), ~0x1)} end
 
         #----- S -----
-        def sb(a, imm, b) (mem8(add(a, se(imm, 12)))).[]= bit_extract(b, 7, 0) end #TODO: переделать return у bit_extract
-        def sh(a, imm, b) (mem16(add(a, se(imm, 12)))).[]= bit_extract(b, 16, 0) end
+        def sb(a, imm, b) (mem8(add(a, se(imm, 12)))).[]= ui8(bit_extract(b, 7, 0)) end
+        def sh(a, imm, b) (mem16(add(a, se(imm, 12)))).[]= ui16(bit_extract(b, 16, 0)) end
         def sw(a, imm, b) (mem32(add(a, se(imm, 12)))).[]= b end
 
         #----- B -----
