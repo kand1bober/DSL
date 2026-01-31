@@ -322,6 +322,48 @@ void exec_sltiu(CPU &cpu, Register par_rd, Register par_rs1, Register par_imm) {
 	cpu.regs[par_rd] = rd;
 }
 
+void exec_slli(CPU &cpu, Register par_rd, Register par_rs1, Register par_imm) {
+	Register rd;
+	Register rs1;
+	rs1 = cpu.regs[par_rs1];
+	Register imm;
+	imm = par_imm;
+	Register _tmp71;
+	_tmp71 = bit_extract(cpu, imm, 4, 0);
+	Register _tmp72;
+	_tmp72 = (rs1 << _tmp71);
+	rd = _tmp72;
+	cpu.regs[par_rd] = rd;
+}
+
+void exec_srli(CPU &cpu, Register par_rd, Register par_rs1, Register par_imm) {
+	Register rd;
+	Register rs1;
+	rs1 = cpu.regs[par_rs1];
+	Register imm;
+	imm = par_imm;
+	Register _tmp75;
+	_tmp75 = bit_extract(cpu, imm, 4, 0);
+	Register _tmp76;
+	_tmp76 = (rs1 >> _tmp75);
+	rd = _tmp76;
+	cpu.regs[par_rd] = rd;
+}
+
+void exec_srai(CPU &cpu, Register par_rd, Register par_rs1, Register par_imm) {
+	Register rd;
+	Register rs1;
+	rs1 = cpu.regs[par_rs1];
+	Register imm;
+	imm = par_imm;
+	Register _tmp79;
+	_tmp79 = bit_extract(cpu, imm, 4, 0);
+	Register _tmp80;
+	_tmp80 = op_sra(cpu, rs1, _tmp79);
+	rd = _tmp80;
+	cpu.regs[par_rd] = rd;
+}
+
 void exec_jalr(CPU &cpu, Register par_rd, Register par_rs1, Register par_imm) {
 	Register rd;
 	Register rs1;
@@ -330,16 +372,16 @@ void exec_jalr(CPU &cpu, Register par_rd, Register par_rs1, Register par_imm) {
 	imm = par_imm;
 	Register pc;
 	pc = cpu.pc;
-	Register _tmp70;
-	_tmp70 = (pc + 4);
-	rd = _tmp70;
-	Register _tmp72;
-	_tmp72 = sign_extend(cpu, imm, 12);
-	Register _tmp73;
-	_tmp73 = (rs1 + _tmp72);
-	Register _tmp75;
-	_tmp75 = (_tmp73 & -2);
-	pc = _tmp75;
+	Register _tmp82;
+	_tmp82 = (pc + 4);
+	rd = _tmp82;
+	Register _tmp84;
+	_tmp84 = sign_extend(cpu, imm, 12);
+	Register _tmp85;
+	_tmp85 = (rs1 + _tmp84);
+	Register _tmp87;
+	_tmp87 = (_tmp85 & -2);
+	pc = _tmp87;
 	cpu.regs[par_rd] = rd;
 	cpu.pc = pc;
 }
@@ -353,16 +395,16 @@ void exec_beq(CPU &cpu, Register par_rs1, Register par_rs2, Register par_imm) {
 	imm = par_imm;
 	Register pc;
 	pc = cpu.pc;
-	Register _tmp76;
-	_tmp76 = (rs1 == rs2);
-	Register _tmp78;
-	_tmp78 = (imm << 1);
-	Register _tmp80;
-	_tmp80 = sign_extend(cpu, _tmp78, 12);
-	Register _tmp81;
-	_tmp81 = (pc + _tmp80);
-	if ((bool)_tmp76) {
-		pc = _tmp81;
+	Register _tmp88;
+	_tmp88 = (rs1 == rs2);
+	Register _tmp90;
+	_tmp90 = (imm << 1);
+	Register _tmp92;
+	_tmp92 = sign_extend(cpu, _tmp90, 12);
+	Register _tmp93;
+	_tmp93 = (pc + _tmp92);
+	if ((bool)_tmp88) {
+		pc = _tmp93;
 	};
 	cpu.pc = pc;
 }
@@ -376,16 +418,16 @@ void exec_bne(CPU &cpu, Register par_rs1, Register par_rs2, Register par_imm) {
 	imm = par_imm;
 	Register pc;
 	pc = cpu.pc;
-	Register _tmp82;
-	_tmp82 = (rs1 != rs2);
-	Register _tmp84;
-	_tmp84 = (imm << 1);
-	Register _tmp86;
-	_tmp86 = sign_extend(cpu, _tmp84, 12);
-	Register _tmp87;
-	_tmp87 = (pc + _tmp86);
-	if ((bool)_tmp82) {
-		pc = _tmp87;
+	Register _tmp94;
+	_tmp94 = (rs1 != rs2);
+	Register _tmp96;
+	_tmp96 = (imm << 1);
+	Register _tmp98;
+	_tmp98 = sign_extend(cpu, _tmp96, 12);
+	Register _tmp99;
+	_tmp99 = (pc + _tmp98);
+	if ((bool)_tmp94) {
+		pc = _tmp99;
 	};
 	cpu.pc = pc;
 }
@@ -399,16 +441,16 @@ void exec_blt(CPU &cpu, Register par_rs1, Register par_rs2, Register par_imm) {
 	imm = par_imm;
 	Register pc;
 	pc = cpu.pc;
-	Register _tmp88;
-	_tmp88 = less_signed(cpu, rs1, rs2);
-	Register _tmp90;
-	_tmp90 = (imm << 1);
-	Register _tmp92;
-	_tmp92 = sign_extend(cpu, _tmp90, 12);
-	Register _tmp93;
-	_tmp93 = (pc + _tmp92);
-	if ((bool)_tmp88) {
-		pc = _tmp93;
+	Register _tmp100;
+	_tmp100 = less_signed(cpu, rs1, rs2);
+	Register _tmp102;
+	_tmp102 = (imm << 1);
+	Register _tmp104;
+	_tmp104 = sign_extend(cpu, _tmp102, 12);
+	Register _tmp105;
+	_tmp105 = (pc + _tmp104);
+	if ((bool)_tmp100) {
+		pc = _tmp105;
 	};
 	cpu.pc = pc;
 }
@@ -422,16 +464,16 @@ void exec_bge(CPU &cpu, Register par_rs1, Register par_rs2, Register par_imm) {
 	imm = par_imm;
 	Register pc;
 	pc = cpu.pc;
-	Register _tmp94;
-	_tmp94 = more_equal_signed(cpu, rs1, rs2);
-	Register _tmp96;
-	_tmp96 = (imm << 1);
-	Register _tmp98;
-	_tmp98 = sign_extend(cpu, _tmp96, 12);
-	Register _tmp99;
-	_tmp99 = (pc + _tmp98);
-	if ((bool)_tmp94) {
-		pc = _tmp99;
+	Register _tmp106;
+	_tmp106 = more_equal_signed(cpu, rs1, rs2);
+	Register _tmp108;
+	_tmp108 = (imm << 1);
+	Register _tmp110;
+	_tmp110 = sign_extend(cpu, _tmp108, 12);
+	Register _tmp111;
+	_tmp111 = (pc + _tmp110);
+	if ((bool)_tmp106) {
+		pc = _tmp111;
 	};
 	cpu.pc = pc;
 }
@@ -445,16 +487,16 @@ void exec_bltu(CPU &cpu, Register par_rs1, Register par_rs2, Register par_imm) {
 	imm = par_imm;
 	Register pc;
 	pc = cpu.pc;
-	Register _tmp100;
-	_tmp100 = less_unsign(cpu, rs1, rs2);
-	Register _tmp102;
-	_tmp102 = (imm << 1);
-	Register _tmp104;
-	_tmp104 = sign_extend(cpu, _tmp102, 12);
-	Register _tmp105;
-	_tmp105 = (pc + _tmp104);
-	if ((bool)_tmp100) {
-		pc = _tmp105;
+	Register _tmp112;
+	_tmp112 = less_unsign(cpu, rs1, rs2);
+	Register _tmp114;
+	_tmp114 = (imm << 1);
+	Register _tmp116;
+	_tmp116 = sign_extend(cpu, _tmp114, 12);
+	Register _tmp117;
+	_tmp117 = (pc + _tmp116);
+	if ((bool)_tmp112) {
+		pc = _tmp117;
 	};
 	cpu.pc = pc;
 }
@@ -468,17 +510,65 @@ void exec_bgeu(CPU &cpu, Register par_rs1, Register par_rs2, Register par_imm) {
 	imm = par_imm;
 	Register pc;
 	pc = cpu.pc;
-	Register _tmp106;
-	_tmp106 = more_equal_unsign(cpu, rs1, rs2);
-	Register _tmp108;
-	_tmp108 = (imm << 1);
-	Register _tmp110;
-	_tmp110 = sign_extend(cpu, _tmp108, 12);
-	Register _tmp111;
-	_tmp111 = (pc + _tmp110);
-	if ((bool)_tmp106) {
-		pc = _tmp111;
+	Register _tmp118;
+	_tmp118 = more_equal_unsign(cpu, rs1, rs2);
+	Register _tmp120;
+	_tmp120 = (imm << 1);
+	Register _tmp122;
+	_tmp122 = sign_extend(cpu, _tmp120, 12);
+	Register _tmp123;
+	_tmp123 = (pc + _tmp122);
+	if ((bool)_tmp118) {
+		pc = _tmp123;
 	};
+	cpu.pc = pc;
+}
+
+void exec_lui(CPU &cpu, Register par_rd, Register par_imm) {
+	Register rd;
+	Register imm;
+	imm = par_imm;
+	Register pc;
+	pc = cpu.pc;
+	Register _tmp125;
+	_tmp125 = (imm << 12);
+	rd = _tmp125;
+	cpu.regs[par_rd] = rd;
+	cpu.pc = pc;
+}
+
+void exec_auipc(CPU &cpu, Register par_rd, Register par_imm) {
+	Register rd;
+	Register imm;
+	imm = par_imm;
+	Register pc;
+	pc = cpu.pc;
+	Register _tmp127;
+	_tmp127 = (imm << 12);
+	Register _tmp128;
+	_tmp128 = (pc + _tmp127);
+	rd = _tmp128;
+	cpu.regs[par_rd] = rd;
+	cpu.pc = pc;
+}
+
+void exec_jal(CPU &cpu, Register par_rd, Register par_imm) {
+	Register rd;
+	Register imm;
+	imm = par_imm;
+	Register pc;
+	pc = cpu.pc;
+	Register _tmp130;
+	_tmp130 = (pc + 4);
+	rd = _tmp130;
+	Register _tmp132;
+	_tmp132 = (imm << 1);
+	Register _tmp134;
+	_tmp134 = sign_extend(cpu, _tmp132, 20);
+	Register _tmp135;
+	_tmp135 = (pc + _tmp134);
+	pc = _tmp135;
+	cpu.regs[par_rd] = rd;
 	cpu.pc = pc;
 }
 

@@ -132,25 +132,25 @@ module SimInfra
         def slti(a, b) slt(a, se(b, 12)) end
         def sltiu(a, b) sltu(a, se(b, 12)) end
             #--- I_SHIFT ---
-        def slli(a, b) end
-        def srli(a, b) end
-        def srai(a, b) end
+        def slli(a, b) op_sll(a, bit_extract(b, 4, 0)) end
+        def srli(a, b) op_srl(a, bit_extract(b, 4, 0)) end
+        def srai(a, b) op_sra(a, bit_extract(b, 4, 0)) end
             #--- I_MEM ---
         # these operations can also be described as 'op(a, imm, b)' but without 
         # 'list_op()' and 'rd[]=' parts by writing 'rd=' in field 'code' in Target  
-        def lb(a, imm, b) list_op() end 
-        def lh(a, imm, b) end
-        def lw(a, imm, b) end
-        def lbu(a, imm, b) end
-        def lhu(a, imm, b) end
+        # def lb(a, imm, b, pc) list_op() end 
+        # def lh(a, imm, b, pc) end
+        # def lw(a, imm, b, pc) end
+        # def lbu(a, imm, b, pc) end
+        # def lhu(a, imm, b, pc) end
             #--- I_JUMP ---
         def jalr(a, imm, b, pc) list_op() { rd[]= add(pc, 4) 
                                             pc[]= send(:and, add(b, se(imm, 12)), ~0x1)} end
 
         #----- S -----
-        def sb(a, imm, b) end
-        def sh(a, imm, b) end
-        def sw(a, imm, b) end
+        # def sb(a, imm, b) end
+        # def sh(a, imm, b) end
+        # def sw(a, imm, b) end
 
         #----- B -----
         def beq(a, b, imm, pc) cond_op(equ(a, b)) { pc.add_assign se(op_sll(imm, 1), 12) } end

@@ -59,14 +59,22 @@ module SimInfra
             define_method(op) { |a, b, c, pc| @scope.public_send(op, a, b, c, pc) }
         end
 
-        (I_JUMP_TYPE_INSNS + I_MEM_TYPE_INSNS).each do |op| 
+        I_JUMP_TYPE_INSNS.each do |op| 
             define_method(op) { |a, imm, b, pc| @scope.public_send(op, a, imm, b, pc) } 
         end
+
+        I_SHIFT_TYPE_INSNS.each do |op|
+            define_method(op) { |imm| @scope.public_send(op, self, imm)}
+        end
         
+        (I_MEM_TYPE_INSNS + S_TYPE_INSNS).each do |op|
+            define_method(op) { |a, imm, b| @scope.public_send(op, a, imm, b) }
+        end
+
         U_TYPE_INSNS.each do |op|
             define_method(op) { |pc| @scope.public_send(op, self, pc)}
         end
-
+        
         J_TYPE_INSNS.each do |op| 
             define_method(op) { |a, imm, pc| @scope.public_send(op, a, imm, pc) } 
         end

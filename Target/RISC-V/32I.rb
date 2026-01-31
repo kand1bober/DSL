@@ -29,6 +29,17 @@ module RV32I
     I_ALU_TYPE_INSNS.each do |name|
         make_i_alu(name)
     end
+    
+    def self.make_i_shift(name)
+        Instruction(name, XReg(:rd), XReg(:rs1), Imm()) {
+            encoding *format_i_shift(name.to_s.to_sym, rd, rs1)
+            asm { "#{name} #{rd}, #{rs1}, #{imm}" }
+            code { rd[]= rs1.send(name, imm) }                       
+        }
+    end
+    I_SHIFT_TYPE_INSNS.each do |name|
+        make_i_shift(name)
+    end
 
     def self.make_i_jump(name)
         Instruction(name, XReg(:rd), XReg(:rs1), Imm(), PC()) {
@@ -67,28 +78,28 @@ module RV32I
         make_b(name)
     end
 
-    # #---------- U ----------
-    # def self.make_u(name)
-    #     Instruction(name, XReg(:rd), Imm(), PC()) {
-    #         encoding *format_u(name.to_s.to_sym, rd)
-    #         asm { "#{name} #{rd}, #{imm}" }
-    #         code { rd[]= imm.send(name, pc) }                       
-    #     }
-    # end
-    # I_JUMP_TYPE_INSNS.each do |name|
-    #     make_u(name)
-    # end
+    #---------- U ----------
+    def self.make_u(name)
+        Instruction(name, XReg(:rd), Imm(), PC()) {
+            encoding *format_u(name.to_s.to_sym, rd)
+            asm { "#{name} #{rd}, #{imm}" }
+            code { rd[]= imm.send(name, pc) }                       
+        }
+    end
+    U_TYPE_INSNS.each do |name|
+        make_u(name)
+    end
 
-    # #---------- J ----------
-    # def self.make_j(name)
-    #     Instruction(name, XReg(:rd), Imm(), PC()) {
-    #         encoding *format_j(name.to_s.to_sym, rd)
-    #         asm { "#{name} #{rd}, #{imm}" }
-    #         code { send(name, rd, imm, pc) }                       
-    #     }
-    # end
-    # I_JUMP_TYPE_INSNS.each do |name|
-    #     make_j(name)
-    # end
+    #---------- J ----------
+    def self.make_j(name)
+        Instruction(name, XReg(:rd), Imm(), PC()) {
+            encoding *format_j(name.to_s.to_sym, rd)
+            asm { "#{name} #{rd}, #{imm}" }
+            code { send(name, rd, imm, pc) }                       
+        }
+    end
+    J_TYPE_INSNS.each do |name|
+        make_j(name)
+    end
 end
 
