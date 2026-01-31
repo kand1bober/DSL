@@ -3,10 +3,21 @@ require_relative "base"
 module SimInfra
     IrStmt = Struct.new(:name, :oprnds, :attrs)
     class IrExpr
-        attr_reader :name, :oprnds, :attrs
+        attr_reader :scope, :name, :oprnds, :attrs
 
         def initialize(name, oprnds, attrs)
-            @name, @oprnds, @attrs = name, oprnds, attrs
+            @name, @oprnds, @attrs = 
+            name,  oprnds,  attrs
+
+            @scope = get_scope()
+        end
+
+        private def get_scope()
+            cur = @oprnds[0]
+            while (cur.class != Var)
+                cur = cur.oprnds[0]
+            end
+            return cur.scope
         end
 
         def type()
@@ -14,9 +25,10 @@ module SimInfra
             while (cur.class != Var)
                 cur = cur.oprnds[0]
             end
-
             return cur.type
         end
+
+        def []=(other) @scope.stmt(:let, [self, other]) end # assignment 
     end
 
     class Var
@@ -25,7 +37,7 @@ module SimInfra
             @scope = scope; @name = name; @type = type;
         end
          
-        def []=(other) @scope.stmt(:let, [self, other]) end # =
+        def []=(other) @scope.stmt(:let, [self, other]) end # assignment
         def add_assign(other) @scope.stmt(:let, [self, @scope.add(self, other)]) end # +=
         def sub_assign(other) @scope.stmt(:let, [self, @scope.sub(self, other)]) end # -=
 
@@ -67,7 +79,11 @@ module SimInfra
             define_method(op) { |imm| @scope.public_send(op, self, imm)}
         end
         
-        (I_MEM_TYPE_INSNS + S_TYPE_INSNS).each do |op|
+        I_MEM_TYPE_INSNS.each do |op|
+            define_method(op) { |imm| @scope.public_send(op, self, imm) }
+        end
+
+        S_TYPE_INSNS.each do |op|
             define_method(op) { |a, imm, b| @scope.public_send(op, a, imm, b) }
         end
 

@@ -52,19 +52,28 @@ module RV32I
         make_i_jump(name)
     end
 
-    # def self.make_i_mem(name)
-    #     Instruction(name, XReg(:rd), XReg(:rs1), Imm(), PC()) {
-    #         encoding *format_i_mem(name.to_s.to_sym, rd, rs1)
-    #         asm { "#{name} #{rd}, #{imm}(#{rs1})" }
-    #         code { send(name, rd, imm, rs1, pc) }                       
-    #     }
-    # end
-    # I_MEM_TYPE_INSNS.each do |name|
-    #     make_i_mem(name)
-    # end
+    def self.make_i_mem(name)
+        Instruction(name, XReg(:rd), XReg(:rs1), Imm()) {
+            encoding *format_i_mem(name.to_s.to_sym, rd, rs1)
+            asm { "#{name} #{rd}, #{imm}(#{rs1})" }
+            code { rd[]= rs1.send(name, imm) }                       
+        }
+    end
+    I_MEM_TYPE_INSNS.each do |name|
+        make_i_mem(name)
+    end
 
     #---------- S ----------
-    
+    def self.make_s(name)
+        Instruction(name, XReg(:rs1), XReg(:rs2), Imm()) {
+            encoding *format_s(name.to_s.to_sym, rs1, rs2)
+            asm { "#{name} #{rs2}, #{imm}(#{rs1})" }    
+            code { send(name, rs1, imm, rs2) }
+        }
+    end
+    S_TYPE_INSNS.each do |name|
+        make_s(name)
+    end
 
     #---------- B ----------
     def self.make_b(name)

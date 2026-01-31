@@ -66,14 +66,17 @@ module SimInfra
         # redefine! add & sub will never be the same
         
         # unary
+        # it is possible to make unary operations with the choice of constants, 
+        # then you need another type of operation.
         [:ui8, :ui16, :ui32,
-        :i8,  :i16,  :i32].each do |op|
+         :i8,  :i16,  :i32, 
+         :mem8, :mem16, :mem32].each do |op|
             define_method(op) { |a| un_op(a, op) }
         end     
         
         # binary 
         [:add, :sub,      # instruction and operation have same representation,
-        :xor, :or, :and, # but in their case it is not a problem
+         :xor, :or, :and, # but in their case it is not a problem
         
         :'op_mul', :'op_div_signed', :'op_div_unsign',
         :'op_rem_signed', :'op_rem_unsign', # '*', '/signed', '/unsign', '%signed', '%unsign'
@@ -81,7 +84,7 @@ module SimInfra
         :'equ', :'not_equ', # '==' '!=' 
         :se, :ze, # sign, unsign extension
         :'less_signed', :'less_unsign', 
-         :'more_equal_signed', :'more_equal_unsign'].each do |op|
+        :'more_equal_signed', :'more_equal_unsign'].each do |op|
             define_method(op) { |a, b| bin_op(a, b, op) }
         end
         
@@ -138,19 +141,19 @@ module SimInfra
             #--- I_MEM ---
         # these operations can also be described as 'op(a, imm, b)' but without 
         # 'list_op()' and 'rd[]=' parts by writing 'rd=' in field 'code' in Target  
-        # def lb(a, imm, b, pc) list_op() end 
-        # def lh(a, imm, b, pc) end
-        # def lw(a, imm, b, pc) end
-        # def lbu(a, imm, b, pc) end
-        # def lhu(a, imm, b, pc) end
+        def lb(a, imm)  se(mem8(add(a,  se(imm, 12))), 8)  end 
+        def lh(a, imm)  se(mem16(add(a, se(imm, 12))), 16) end
+        def lw(a, imm)     mem32(add(a, se(imm, 12)))      end
+        def lbu(a, imm) ze(mem8(add(a,  se(imm, 12))), 8)  end
+        def lhu(a, imm) ze(mem16(add(a, se(imm, 12))), 16) end
             #--- I_JUMP ---
         def jalr(a, imm, b, pc) list_op() { rd[]= add(pc, 4) 
                                             pc[]= send(:and, add(b, se(imm, 12)), ~0x1)} end
 
         #----- S -----
-        # def sb(a, imm, b) end
-        # def sh(a, imm, b) end
-        # def sw(a, imm, b) end
+        def sb(a, imm, b) (mem8(add(a, se(imm, 12)))).[]= bit_extract(b, 7, 0) end #TODO: переделать return у bit_extract
+        def sh(a, imm, b) (mem16(add(a, se(imm, 12)))).[]= bit_extract(b, 16, 0) end
+        def sw(a, imm, b) (mem32(add(a, se(imm, 12)))).[]= b end
 
         #----- B -----
         def beq(a, b, imm, pc) cond_op(equ(a, b)) { pc.add_assign se(op_sll(imm, 1), 12) } end
