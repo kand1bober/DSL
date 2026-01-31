@@ -54,5 +54,7 @@ module SimInfra
 
     B_TYPE_INSNS = [:beq, :bne, :blt, :bge, :bltu, :bgeu]
 
+    U_TYPE_INSNS = [:lui, :auipc]
+    
     J_TYPE_INSNS = [:jal]
 end

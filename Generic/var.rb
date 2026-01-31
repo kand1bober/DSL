@@ -24,11 +24,11 @@ module SimInfra
         def initialize(scope, name, type)
             @scope = scope; @name = name; @type = type;
         end
-        
-        # Syntax "var[]=value" is used to assign variable
-        # it's similar to "var[hi:lo]=value" for partial assignment
-        def []=(other); @scope.stmt(:let, [self, other]); end
-        
+         
+        def []=(other) @scope.stmt(:let, [self, other]) end # =
+        def add_assign(other) @scope.stmt(:let, [self, @scope.add(self, other)]) end # +=
+        def sub_assign(other) @scope.stmt(:let, [self, @scope.sub(self, other)]) end # -=
+
         # dumps states and disables @scope dump
         def inspect; "#{@name}:#{@type} (#{@scope.object_id})"; end
     end
@@ -59,6 +59,16 @@ module SimInfra
             define_method(op) { |a, b, c, pc| @scope.public_send(op, a, b, c, pc) }
         end
 
+        (I_JUMP_TYPE_INSNS + I_MEM_TYPE_INSNS).each do |op| 
+            define_method(op) { |a, imm, b, pc| @scope.public_send(op, a, imm, b, pc) } 
+        end
         
+        U_TYPE_INSNS.each do |op|
+            define_method(op) { |pc| @scope.public_send(op, self, pc)}
+        end
+
+        J_TYPE_INSNS.each do |op| 
+            define_method(op) { |a, imm, pc| @scope.public_send(op, a, imm, pc) } 
+        end
     end
 end

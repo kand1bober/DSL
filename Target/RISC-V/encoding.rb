@@ -89,7 +89,7 @@ module SimInfra
         format_i(rs1, funct3, rd, 0b0000011)
     end
 
-    def format_i_shift(name, rs1, rd) 
+    def format_i_shift(name, rd, rs1) 
         funct3, funct7 = 
         {
             slli:  [1, 0],
@@ -107,7 +107,7 @@ module SimInfra
         ]
     end
 
-    def format_i_jump(name, rs1, rd)
+    def format_i_jump(name, rd, rs1)
         funct3 = 
         {
             jalr: [0],

@@ -21,7 +21,7 @@ module SimInfra
         end
 
         def to_s
-            return @name
+            return @name.to_s
         end
     end
     def Imm(); Imm.new(); end

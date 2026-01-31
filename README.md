@@ -131,7 +131,8 @@ SimInfra (module)
 ### RiscV 32IM ISA Reference
 <details>
 
-<summary>Reference</summary>
+<summary>Пример с сайта университета University of Pennsylvania School of Engineering and Applied Science</summary>
     <img src="readme_src/riscv_reference.jpg" width="800"/>
 </details>
 
+w
