@@ -63,7 +63,7 @@ module SimInfra
     class Var
     include SimInfra
 
-        (R_ALU_TYPE_INSNS + I_ALU_TYPE_INSNS).each do |op|
+        (R_TYPE_INSNS + I_ALU_TYPE_INSNS).each do |op|
             define_method(op) { |other| @scope.public_send(op, self, other) }
         end
 

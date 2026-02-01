@@ -134,5 +134,3 @@ SimInfra (module)
 <summary>Пример с сайта университета University of Pennsylvania School of Engineering and Applied Science</summary>
     <img src="readme_src/riscv_reference.jpg" width="800"/>
 </details>
-
-w

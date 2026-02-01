@@ -7,15 +7,15 @@ module RV32I
     include SimInfra
 
     #---------- R ----------
-    def self.make_r_alu(name)
+    def self.make_r(name)
         Instruction(name, XReg(:rd), XReg(:rs1), XReg(:rs2)) {
-            encoding *format_r_alu(name.to_s.to_sym, rd, rs1, rs2)
+            encoding *format_r(name.to_s.to_sym, rd, rs1, rs2)
             asm { "#{name} #{rd}, #{rs1}, #{rs2}" }
             code { rd[]= rs1.send(name, rs2) } #call for rs1 method with "name", passing rs2 as argument                      
         }
     end
-    R_ALU_TYPE_INSNS.each do |name| 
-        make_r_alu(name)
+    R_TYPE_INSNS.each do |name| 
+        make_r(name)
     end
 
     #---------- I ----------

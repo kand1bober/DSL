@@ -39,7 +39,7 @@ module SimInfra
 end
 
 module SimInfra
-    R_ALU_TYPE_INSNS = [:add, :sub, :xor, :or, :and, 
+    R_TYPE_INSNS = [:add, :sub, :xor, :or, :and, 
     :slt, :sltu, :sll, :srl, :sra, 
     :mul, :mulh, :mulhsu, :mulhu, 
     :div, :divu, :rem, :remu]

@@ -4,7 +4,7 @@ require_relative "scope"
 module SimInfra
     @@instructions = [] # array of instruction description
 
-    InstructionInfo= Struct.new(:name, :fields, :format, :code, :args, :asm)
+    InstructionInfo= Struct.new(:name, :fields, :lead_bits, :format, :code, :args, :asm)
     
     class InstructionInfoBuilder
         def initialize(name, *args);
@@ -33,12 +33,16 @@ module SimInfra
     class InstructionInfoBuilder
         include SimInfra
         
-        def encoding(format, fields); @info.fields = fields; @info.format = format; end
+        def encoding(format, fields, lead_bits)
+            @info.fields = fields
+            @info.format = format 
+            @info.lead_bits = lead_bits
+        end
         
         def asm(&block)
             @info.asm = instance_eval(&block) #in result string from &block is written in @info.asm
         end
-
+        
         def code(&block)
             @info.code = scope = Scope.new(nil) # root scope
             @info.args.each do |arg|
