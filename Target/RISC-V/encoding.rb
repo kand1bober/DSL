@@ -92,7 +92,7 @@ module SimInfra
             mask = ((1 << width ) - 1) 
             str = (field.value & mask).to_s(2).rjust(width, '0')
             lead_bits_str[insn_bit_len - 1 - field.from, width] = str
-            puts "#{field.value}, #{lead_bits_str}"
+            # puts "#{field.value}, #{lead_bits_str}"
         end
 
         return lead_bits_str
@@ -101,7 +101,6 @@ module SimInfra
     #-------------- funct3, funct7 values  ----------------
     #----- I -----
     def format_i_alu(name, rd, rs1)
-        puts "#{name}"
         funct3 =
         {
             addi:  0,
@@ -115,7 +114,6 @@ module SimInfra
     end
 
     def format_i_mem(name, rd, rs1) 
-        puts "#{name}"
         funct3 = {
             lb:  0,
             lh:  1,
@@ -127,7 +125,6 @@ module SimInfra
     end
 
     def format_i_shift(name, rd, rs1)
-        puts "#{name}" 
         pair = {
             slli:  [1, 0],
             srli:  [5, 0],
@@ -150,7 +147,6 @@ module SimInfra
     end
 
     def format_i_jump(name, rd, rs1)
-        puts "#{name}"
         funct3 = {
             jalr: 0,
         }[name]
@@ -158,8 +154,7 @@ module SimInfra
     end
 
     #----- S -----
-    def format_s(name, rs1, rs2)
-        puts "#{name}" 
+    def format_s(name, rs1, rs2) 
         funct3 = {
             sb: 0,
             sh: 1,
@@ -170,7 +165,6 @@ module SimInfra
 
     #----- B -----
     def format_b(name, rs1, rs2)
-        puts "#{name}"
         funct3 = {
             beq:  0,
             bne:  1,
@@ -183,8 +177,7 @@ module SimInfra
     end
 
     #----- U -----
-    def format_u(name, rd)
-        puts "#{name}" 
+    def format_u(name, rd) 
         opcode = 
         {   
             lui:   0b0110111, 
@@ -195,7 +188,6 @@ module SimInfra
 
     #----- J -----
     def format_j(name, rd) 
-        puts "#{name}"
         format_u_j(rd, 0b1101111)
     end
 
