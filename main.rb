@@ -9,4 +9,5 @@ SimInfra.serialize
 require_relative "Target/RISC-V/interpreter.rb"
 
 # generate decoder
+require_relative "Target/RISC-V/decode_tree.rb"
 require_relative "Target/RISC-V/decoder.rb"
