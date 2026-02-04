@@ -65,9 +65,9 @@ module Decoder
                                                 lead_bits)
 
             if (is_leaf == true)
-                tree[:nodes][node] = leaf[:insn_name]
+                tree[:nodes][actual_node] = leaf[:insn_name]
             elsif (subtree)
-                tree[:nodes][node] = subtree
+                tree[:nodes][actual_node] = subtree
             end
 
             node += 1
@@ -83,7 +83,7 @@ module Decoder
         if sublist.empty?
             return [nil, nil, nil]
         elsif sublist.length == 1 
-            puts "leaf sublist: #{sublist}"
+            # puts "leaf sublist: #{sublist}"
             return [true, sublist[0], nil]
         end
 
@@ -95,6 +95,10 @@ module Decoder
         # remove previous lead_bits from consideration by overwriting with 'x'
         # object 'sublist' is not changed
         new_lead_bits = get_lead_bits(sublist, separ_mask)
+        puts "new_lead_bits:"
+        new_lead_bits.each do |item|
+            puts "\t#{item}"
+        end
         msb, lsb = get_maj_range(new_lead_bits)
         return {} unless msb && lsb  # ранний выход
         width = msb - lsb + 1
@@ -111,21 +115,21 @@ module Decoder
             nodes: {},
         }
 
-        node = 0
-        while (node <= (1 << width) - 1)
-            actual_node = node | (node << lsb)
+        new_node = 0
+        while (new_node <= (1 << width) - 1)
+            actual_node = node | (new_node << lsb)
 
-            is_leaf, result, child_subtree = make_child(actual_node,
+            is_leaf, leaf, child_subtree = make_child(actual_node,
                                         new_mask,
                                         sublist)
 
             if (is_leaf == true)
-                cur_subtree[:nodes][node_val] = result
+                cur_subtree[:nodes][actual_node] = leaf[:insn_name]
             elsif (child_subtree)
-                cur_subtree[:nodes][node_val] = child_subtree
+                cur_subtree[:nodes][actual_node] = child_subtree
             end
 
-            node += 1
+            new_node += 1
         end
 
         if cur_subtree[:nodes].empty?
@@ -142,7 +146,7 @@ module Decoder
         lead_bits.each do |item|
             msb = separ_mask[:msb]
             lsb = separ_mask[:lsb]
-            width = msb - lsb
+            width = msb - lsb + 1
             from = INSN_BIT_LEN - 1 - msb
             
             if (item[:bits][from, width] == (node & separ_mask[:value]).to_s(2).rjust(INSN_BIT_LEN, '0')[from, width]) 
@@ -161,27 +165,13 @@ module Decoder
     
     def self.get_lead_bits(lead_bits, separ_mask)    
         # make copy of lead_bits, not a ref
-        new_lead_bits = lead_bits.map { |item| {insn_name: item[:insn_name].dup, bits: item[:bits].dup} }
-        new_lead_bits.each do |item| 
-            item[:bits] = add_x(item[:bits], separ_mask)
+        # new_lead_bits = lead_bits.map { |item| {insn_name: item[:insn_name].dup, bits: item[:bits].dup} }
+        lead_bits.each do |item|
+            from = INSN_BIT_LEN - 1 - separ_mask[:msb]
+            width = separ_mask[:msb] - separ_mask[:lsb] + 1 
+            item[:bits][from, width] = 'x' * width
         end
-        return new_lead_bits
-    end
-
-    # insert x on positions i in instrcution, if separ_mask[i] == 1 
-    def self.add_x(insn, separ_mask)
-        i = INSN_BIT_LEN - 1
-        while i >= 0
-            mask = (1 << i)
-            if (separ_mask[:value] & mask)
-                # add 'x' on this position in insn
-                insn[INSN_BIT_LEN - 1 - i, 1] = 'x'
-            end
-
-            i -= 1
-        end
-
-        return insn
+        return lead_bits
     end
 
     def self.get_maj_range(lead_bits)
