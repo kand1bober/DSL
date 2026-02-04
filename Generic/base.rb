@@ -13,6 +13,8 @@ module SimInfra
         File.open("result/IR.yaml", "w") do |file|
             file.write(yaml_data)
         end
+
+        puts "IR made in 'result/IR.yaml'"
     end
 
     # reset state

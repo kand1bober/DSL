@@ -1,111 +1,220 @@
 require_relative "../../Generic/base.rb"
 require 'yaml'
 
-make_head(ALL_INSNS)
-
-def make_head(insns)
-    lead_bits = get_lead_bits(insns) # opcode, funct3, funct7
-    msb, lsb = get_maj_bits(lead_bits) # major range, most/least significant bits
-    width = msb - lsb + 1
+module Decoder
+    @allowed_classes = [
+        Symbol,
+        SimInfra::Field,
+        SimInfra::ImmFieldPart,
+        SimInfra::Var,
+        SimInfra::XReg,
+        SimInfra::Imm,
+        SimInfra::Scope,
+        SimInfra::IrStmt,
+        SimInfra::IrExpr,
+        SimInfra::Constant,
+        SimInfra::PC,
+    ]
     
-    tree = {
-        :range = [msb, lsb],
-        :node = {} # here subtree is added
-    }
-
-    window = (1 << width) - 1
-    shifted_window = window << lsb
-
-    node_val = 0
-    while (node_val <= window)
-        actual_node = node_val << lsb
-        subtree = {}
+    def self.make_tree(insns)
+        data = YAML.safe_load(File.read('result/IR.yaml'), permitted_classes: @allowed_classes, aliases: true)
         
-        is_leaf, result = MAKE_CHILD(actual_node,
-                                     shifted_window,
-                                     lead_bits, 
-                                     subtree)
-
-        if (is_leaf == true)
-            tree[:node][:node_value] = result
-        elsif (subtree)
-            tree[:node][:node_value] = subtree
+        #select instructions from 'insns' argument
+        selected_insns = data.select { |insn| insns.include?(insn[:name]) }
+        
+        lead_bits = []
+        selected_insns.map do |insn| 
+            lead_bits << {insn_name: insn[:name], bits: insn[:lead_bits]}
         end
-    end
-end
 
-def make_child(node, separ_mask, insns, cur_subtree) 
-    # sublist = FILTER_INSTRUCTIONS(instructions, node, separ_mask)
+        tree = make_head(lead_bits)
 
-    # IF sublist empty: RETURN None, None
+        # dump tree
+        File.write('result/decode_tree.yaml', tree.to_yaml)
 
-    # IF len(sublist) == 1: RETURN True, sublist
-
-    # lead_bits = GET_LEAD_BITS(sublist, separ_mask)
-    # maj_range = GET_MAJ_RANGE(lead_bits)
-    # msb, lsb = maj_range[-1], maj_range[0]
-    # width = msb - lsb + 1
-
-    # current_subtree["range"] = (msb, lsb)
-    # current_subtree["nodes"] = {}
-
-    # new_mask = separ_mask | ((1<<width)-1 << lsb)
-
-    # FOR node_value FROM 0 TO (1 << width) - 1:
-    #     actual_node = node | (node_value << lsb)
-    #     child_subtree = {}
-
-    #     is_leaf, result = MAKE_CHILD(actual_node,
-    #                                 new_mask,
-    #                                 sublist,
-    #                                 child_subtree)
-
-    #     IF is_leaf == True:
-    #     current_subtree["nodes"]["node_value] = result
-    #     ELSE IF child_subtree != {}:
-    #     current_subtree["nodes"]["node_value] = subtree
-
-    # RETURN None, None
-end
-
-def get_lead_bits(insns)
-    data = YAML.load_file('instructions.yml')
-    
-    #select instructions from 'insns' argument
-    selected_insns = data.select { |insn| insns.include?(insn[:name]) }
-
-    lead_bits = []
-    selected_insns.map do |insn| 
-        lead_bits << {insn_name: insn[:name], bits: insn[:lead_bits]}
+        puts "decode tree made in 'result/decode_tree.yaml'"
     end
 
-    return lead_bits
-end
+    INSN_BIT_LEN = 32
 
-def get_maj_bits(insn_bit_len= 32, lead_bits)
-    maj_ranges = []
+    # lead_bits == opcode, funct3, funct7
+    def self.make_head(lead_bits)
+        msb, lsb = get_maj_range(lead_bits) # major range, most/least significant bits
+        return {} unless msb && lsb  # ранний выход
+        width = msb - lsb + 1
+        
+        window = (1 << width) - 1
+        separ_mask = {
+            value: window << lsb, 
+            msb: msb, 
+            lsb: lsb,
+        }
 
-    i = 0
-    while i < insn_bit_len
-        # check that there is no 'x' in all rows at i position
-        if lead_bits.all? { |item| item[:bits][i] != 'x' }
-            j = i
-            # until there is an 'x' in all rows at j position
-            while j < insn_bit_len && lead_bits.all? { |item| item[:bits][j] != 'x' }
-                j += 1
+        tree = {
+            range: [msb, lsb],
+            separ_mask: separ_mask[:value],
+            nodes: {} # here subtree is added
+        }
+
+        node = 0
+        while (node <= window)
+            actual_node = node << lsb
+            
+            is_leaf, leaf, subtree = make_child(actual_node,
+                                                separ_mask,
+                                                lead_bits)
+
+            if (is_leaf == true)
+                tree[:nodes][node] = leaf[:insn_name]
+            elsif (subtree)
+                tree[:nodes][node] = subtree
             end
-            maj_ranges << {msb: i, lsb: j - 1}
-            i = j
-        else            
-            i += 1
+
+            node += 1
         end
+
+        return tree
     end
 
-    # find a range with a largest width
-    if maj_ranges.any?
-        largest = maj_ranges.max_by { |range| range[:lsb] - range[:msb] + 1 }
-        return [largest[:msb], largest[:lsb]]
-    else
-        return [nil, nil]
+    def self.make_child(node, separ_mask, lead_bits) 
+        sublist = filter_insns(lead_bits, node, separ_mask)
+        
+        # this node is leaf
+        if sublist.empty?
+            return [nil, nil, nil]
+        elsif sublist.length == 1 
+            puts "leaf sublist: #{sublist}"
+            return [true, sublist[0], nil]
+        end
+
+        puts "sublist:"
+        sublist.each do |item|
+            puts "\t#{item[:insn_name]}, #{item[:bits]}}"
+        end
+    # this node has more instructions   
+        # remove previous lead_bits from consideration by overwriting with 'x'
+        # object 'sublist' is not changed
+        new_lead_bits = get_lead_bits(sublist, separ_mask)
+        msb, lsb = get_maj_range(new_lead_bits)
+        return {} unless msb && lsb  # ранний выход
+        width = msb - lsb + 1
+        
+        new_mask = {
+            value: separ_mask[:value] | ((1<<width)-1 << lsb), 
+            msb: msb,
+            lsb: lsb,
+        }
+        
+        cur_subtree = {
+            range: [msb, lsb],
+            separ_mask: new_mask[:value],  
+            nodes: {},
+        }
+
+        node = 0
+        while (node <= (1 << width) - 1)
+            actual_node = node | (node << lsb)
+
+            is_leaf, result, child_subtree = make_child(actual_node,
+                                        new_mask,
+                                        sublist)
+
+            if (is_leaf == true)
+                cur_subtree[:nodes][node_val] = result
+            elsif (child_subtree)
+                cur_subtree[:nodes][node_val] = child_subtree
+            end
+
+            node += 1
+        end
+
+        if cur_subtree[:nodes].empty?
+            return [nil, nil, nil]
+        else
+            return [nil, nil, cur_subtree]
+        end
+        # return [nil, nil, cur_subtree]
     end
+
+    # return is list of hash with :insn_name and :lead_bits 
+    def self.filter_insns(lead_bits, node, separ_mask)
+        sublist = [] 
+        lead_bits.each do |item|
+            msb = separ_mask[:msb]
+            lsb = separ_mask[:lsb]
+            width = msb - lsb
+            from = INSN_BIT_LEN - 1 - msb
+            
+            if (item[:bits][from, width] == (node & separ_mask[:value]).to_s(2).rjust(INSN_BIT_LEN, '0')[from, width]) 
+                # puts "lead_bits: #{item[:bits]}\n"
+                # puts "item[:bits][from, width]: #{item[:bits][from, width]}"
+                # puts "node: #{node}"
+                # puts "node & separ_mask[:value]: #{node & separ_mask[:value]}"
+                # puts "to_s(2).rjust: #{(node & separ_mask[:value]).to_s(2).rjust(INSN_BIT_LEN, '0')}"
+                # puts "[]: #{(node & separ_mask[:value]).to_s(2).rjust(INSN_BIT_LEN, '0')[from, width]}"
+                
+                sublist << item
+            end
+        end
+        return sublist
+    end
+    
+    def self.get_lead_bits(lead_bits, separ_mask)    
+        # make copy of lead_bits, not a ref
+        new_lead_bits = lead_bits.map { |item| {insn_name: item[:insn_name].dup, bits: item[:bits].dup} }
+        new_lead_bits.each do |item| 
+            item[:bits] = add_x(item[:bits], separ_mask)
+        end
+        return new_lead_bits
+    end
+
+    # insert x on positions i in instrcution, if separ_mask[i] == 1 
+    def self.add_x(insn, separ_mask)
+        i = INSN_BIT_LEN - 1
+        while i >= 0
+            mask = (1 << i)
+            if (separ_mask[:value] & mask)
+                # add 'x' on this position in insn
+                insn[INSN_BIT_LEN - 1 - i, 1] = 'x'
+            end
+
+            i -= 1
+        end
+
+        return insn
+    end
+
+    def self.get_maj_range(lead_bits)
+        maj_ranges = []
+
+        i = 0
+        while i < INSN_BIT_LEN
+            # check that there is no 'x' in all rows at i position
+            if lead_bits.all? { |item| item[:bits][i] != 'x' }
+                j = i
+                # until there is an 'x' in all rows at j position
+                while j < INSN_BIT_LEN && lead_bits.all? { |item| item[:bits][j] != 'x' }
+                    j += 1
+                end
+                maj_ranges << {msb: INSN_BIT_LEN - 1 - i, lsb: INSN_BIT_LEN - j}
+                i = j
+            else            
+                i += 1
+            end
+        end
+
+        # find a range with a largest width
+        if maj_ranges.any?
+            largest = maj_ranges.max_by { |range| range[:lsb] - range[:msb] + 1 }
+            return [largest[:msb], largest[:lsb]]
+        else
+            return [nil, nil]
+        end
+    end
+end
+
+module Decoder
+    include SimInfra
+    
+    make_tree(ALL_INSNS)
 end

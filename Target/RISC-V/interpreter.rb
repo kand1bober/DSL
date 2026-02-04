@@ -243,4 +243,4 @@ File.open("result/interpret.cpp", "w") do |f|
     end
 end
 
-puts("C++ interpreter generated in interpret.cpp")
+puts("C++ interpreter generated in 'interpret.cpp'")
