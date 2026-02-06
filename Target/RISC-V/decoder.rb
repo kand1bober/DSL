@@ -1,19 +1,33 @@
 require 'yaml'
 
 module Decoder
+    @allowed_classes = [
+        Symbol,
+        SimInfra::Field,
+        SimInfra::ImmFieldPart,
+        SimInfra::Var,
+        SimInfra::XReg,
+        SimInfra::Imm,
+        SimInfra::Scope,
+        SimInfra::IrStmt,
+        SimInfra::IrExpr,
+        SimInfra::Constant,
+        SimInfra::PC,
+    ]   
+
     INDENT = "    "
     
-    def self.generate_decoder_files(tree, base_name)
+    def self.generate_decoder_files(tree, ir, base_name)
         # Собираем все инструкции для деклараций
         declarations = []
         collect_instructions(tree, declarations)
         instructions = declarations.uniq
         
         # Генерируем .hpp файл
-        generate_header_file(instructions, "#{base_name}.hpp")
+        generate_header_file(instructions, ir, "#{base_name}.hpp")
         
         # Генерируем .cpp файл
-        generate_cpp_file(tree, instructions, "#{base_name}.cpp")
+        generate_cpp_file(tree, instructions, ir, "#{base_name}.cpp")
         
         puts "Decoder generated:"
         puts "  - #{base_name}.hpp (header with declarations)"
@@ -22,7 +36,7 @@ module Decoder
     
     private
     
-    def self.generate_header_file(instructions, output_file)
+    def self.generate_header_file(instructions, ir, output_file)
         output = []
         
         output << "#ifndef DECODER_HPP"
@@ -34,18 +48,25 @@ module Decoder
         output << ""
         output << "// Execution functions declarations"
         instructions.each do |insn_name|
-        output << "void exec_#{insn_name}(uint32_t insn, SPU& spu);"
+            args = get_instruction_fields(ir, insn_name.to_sym)[:args]
+            params = String.new()
+            args.each do |arg|
+                if (arg.name != :pc)
+                    params << ", #{arg.name.to_s}"
+                end        
+            end
+            output << "void exec_#{insn_name}(SPU& spu#{params});"
         end
         output << ""
         output << "// Main decoder function"
-        output << "uint32_t decode_and_execute(uint32_t insn, SPU& spu);"
+        output << "uint32_t decode_and_execute(SPU& spu, uint32_t insn);"
         output << ""
         output << "#endif // DECODER_HPP"
         
         File.write(output_file, output.join("\n"))
     end
     
-    def self.generate_cpp_file(tree, instructions, output_file)
+    def self.generate_cpp_file(tree, instructions, ir, output_file)
         @output = []
         
         @output << "// Auto-generated decoder from YAML tree"
@@ -53,7 +74,7 @@ module Decoder
         @output << ""
         
         @output << "// Main decoder implementation"
-        @output << "uint32_t decode_and_execute(uint32_t insn, SPU& spu) {"
+        @output << "uint32_t decode_and_execute(SPU& spu, uint32_t insn) {"
         @output << INDENT + "// Start decoding from the root"
         generate_switch_statement(tree, 1, "insn")
         @output << INDENT + "return 0;"
@@ -84,7 +105,7 @@ module Decoder
 
         if node.is_a?(String) || node.is_a?(Symbol)
         # Лист дерева - инструкция
-        @output << switch_indent + "exec_#{node}(#{var_name}, spu);"
+        @output << switch_indent + "exec_#{node}(spu, );"
         @output << switch_indent + "return 0;"
         return
         end
@@ -106,12 +127,26 @@ module Decoder
         node[:nodes].each do |key, child|
         @output << case_indent + "case 0x#{key.to_s(16)}: {"
         
-        if child.is_a?(String) || child.is_a?(Symbol)
-            # Лист
-            @output << case_indent + INDENT + "exec_#{child}(#{var_name}, spu);"
-            # @output << case_indent + INDENT + "return 0;"
-        elsif child.is_a?(Hash)
-            # Поддерево - рекурсивный вызов
+        if child.is_a?(String) || child.is_a?(Symbol) # Leaf
+            values = String.new()
+            fields, args = get_instruction_fields_and_args(ir, child)
+            args.each do |arg| # past args in correct order
+                case arg.name 
+                    when :rd, :rs1, :rs2
+                        field = fields.find { |field| field[:name] == arg.name} # find field with name of this arg 
+                        width = field[:from] - field[:to] + 1
+                        values << ", (#{var_name} >> #{field[:to]}) & ((1 << #{width}) - 1)"
+                    when :imm
+                        lo = fields.find { |field| field[:order] == :lo} 
+                        hi = fields.find { |field| field[:order] == :hi} 
+                        
+                end
+                # extract field value
+
+            end
+
+            @output << case_indent + INDENT + "exec_#{child}(spu#{values});"
+        elsif child.is_a?(Hash) # Subtree - recursive call
             generate_switch_statement(child, indent_level + 2, var_name)
         end
         
@@ -123,10 +158,33 @@ module Decoder
         @output << case_indent + INDENT + "throw std::runtime_error(\"Unknown insn: 0x\" + std::to_string(insn));"
         @output << switch_indent + "}"
     end
+
+    # Find instruction in IR by name
+    def self.find_instruction_by_name(instructions, name)
+        instructions.find { |insn| insn[:name] == name }
+    end
+
+    # Get instruction fields
+    def self.get_instruction_fields_and_args(instructions, name)
+        insn = find_instruction_by_name(instructions, name)
+        insn ? {fields: insn[:fields], args: insn[:args]} : nil
+    end
+
+        # 4. Использование
+        
+        # # Пример: получить поля для инструкции 'add'
+        # add_fields = get_instruction_fields(instructions_data, :add)
+        # if add_fields
+        # puts "Поля инструкции add:"
+        # add_fields.each do |field|
+        #     puts "  #{field[:name]}: биты #{field[:from]}:#{field[:to]}, значение: #{field[:value]}"
+        # end
+        # end
 end
 
 module Decoder
     tree = YAML.load_file('result/decode_tree.yaml')
+    ir = YAML.load_file('result/IR.yaml', permitted_classes: @allowed_classes, aliases: true)
     
-    generate_decoder_files(tree, 'result/decoder')
+    generate_decoder_files(tree, ir, 'result/decoder')
 end

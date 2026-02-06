@@ -4,7 +4,7 @@
 
 #ifndef OPERATIONS_HEADER
 #define OPERATIONS_HEADER 
-
+                                                                                                                                        
 typedef uint32_t Register;
 typedef int32_t  SignedRegister;
 

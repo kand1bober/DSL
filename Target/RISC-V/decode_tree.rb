@@ -79,26 +79,16 @@ module DecodeTree
     def self.make_child(node, separ_mask, lead_bits) 
         sublist = filter_insns(lead_bits, node, separ_mask)
         
-        # this node is leaf
+    # this node is leaf
         if sublist.empty?
             return [nil, nil, nil]
         elsif sublist.length == 1 
-            # puts "leaf sublist: #{sublist}"
             return [true, sublist[0], nil]
         end
 
-        puts "sublist:"
-        sublist.each do |item|
-            puts "\t#{item[:insn_name]}, #{item[:bits]}}"
-        end
     # this node has more instructions   
         # remove previous lead_bits from consideration by overwriting with 'x'
-        # object 'sublist' is not changed
         new_lead_bits = get_lead_bits(sublist, separ_mask)
-        puts "new_lead_bits:"
-        new_lead_bits.each do |item|
-            puts "\t#{item}"
-        end
         msb, lsb = get_maj_range(new_lead_bits)
         return {} unless msb && lsb  # ранний выход
         width = msb - lsb + 1
@@ -137,7 +127,6 @@ module DecodeTree
         else
             return [nil, nil, cur_subtree]
         end
-        # return [nil, nil, cur_subtree]
     end
 
     # return is list of hash with :insn_name and :lead_bits 
@@ -164,8 +153,6 @@ module DecodeTree
     end
     
     def self.get_lead_bits(lead_bits, separ_mask)    
-        # make copy of lead_bits, not a ref
-        # new_lead_bits = lead_bits.map { |item| {insn_name: item[:insn_name].dup, bits: item[:bits].dup} }
         lead_bits.each do |item|
             from = INSN_BIT_LEN - 1 - separ_mask[:msb]
             width = separ_mask[:msb] - separ_mask[:lsb] + 1 

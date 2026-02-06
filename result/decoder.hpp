@@ -6,45 +6,45 @@
 #include "op.h"
 
 // Execution functions declarations
-void exec_lb(uint32_t insn, SPU& spu);
-void exec_lh(uint32_t insn, SPU& spu);
-void exec_lw(uint32_t insn, SPU& spu);
-void exec_lbu(uint32_t insn, SPU& spu);
-void exec_lhu(uint32_t insn, SPU& spu);
-void exec_slli(uint32_t insn, SPU& spu);
-void exec_srli(uint32_t insn, SPU& spu);
-void exec_srai(uint32_t insn, SPU& spu);
-void exec_auipc(uint32_t insn, SPU& spu);
-void exec_sb(uint32_t insn, SPU& spu);
-void exec_sh(uint32_t insn, SPU& spu);
-void exec_sw(uint32_t insn, SPU& spu);
-void exec_add(uint32_t insn, SPU& spu);
-void exec_sub(uint32_t insn, SPU& spu);
-void exec_mulh(uint32_t insn, SPU& spu);
-void exec_mulhsu(uint32_t insn, SPU& spu);
-void exec_mulhu(uint32_t insn, SPU& spu);
-void exec_div(uint32_t insn, SPU& spu);
-void exec_divu(uint32_t insn, SPU& spu);
-void exec_rem(uint32_t insn, SPU& spu);
-void exec_remu(uint32_t insn, SPU& spu);
-void exec_slt(uint32_t insn, SPU& spu);
-void exec_sltu(uint32_t insn, SPU& spu);
-void exec_xor(uint32_t insn, SPU& spu);
-void exec_srl(uint32_t insn, SPU& spu);
-void exec_sra(uint32_t insn, SPU& spu);
-void exec_or(uint32_t insn, SPU& spu);
-void exec_and(uint32_t insn, SPU& spu);
-void exec_lui(uint32_t insn, SPU& spu);
-void exec_beq(uint32_t insn, SPU& spu);
-void exec_bne(uint32_t insn, SPU& spu);
-void exec_blt(uint32_t insn, SPU& spu);
-void exec_bge(uint32_t insn, SPU& spu);
-void exec_bltu(uint32_t insn, SPU& spu);
-void exec_bgeu(uint32_t insn, SPU& spu);
-void exec_jalr(uint32_t insn, SPU& spu);
-void exec_jal(uint32_t insn, SPU& spu);
+void exec_lb(SPU& spu, rd, rs1, imm);
+void exec_lh(SPU& spu, rd, rs1, imm);
+void exec_lw(SPU& spu, rd, rs1, imm);
+void exec_lbu(SPU& spu, rd, rs1, imm);
+void exec_lhu(SPU& spu, rd, rs1, imm);
+void exec_slli(SPU& spu, rd, rs1, imm);
+void exec_srli(SPU& spu, rd, rs1, imm);
+void exec_srai(SPU& spu, rd, rs1, imm);
+void exec_auipc(SPU& spu, rd, imm);
+void exec_sb(SPU& spu, rs1, rs2, imm);
+void exec_sh(SPU& spu, rs1, rs2, imm);
+void exec_sw(SPU& spu, rs1, rs2, imm);
+void exec_add(SPU& spu, rd, rs1, rs2);
+void exec_sub(SPU& spu, rd, rs1, rs2);
+void exec_mulh(SPU& spu, rd, rs1, rs2);
+void exec_mulhsu(SPU& spu, rd, rs1, rs2);
+void exec_mulhu(SPU& spu, rd, rs1, rs2);
+void exec_div(SPU& spu, rd, rs1, rs2);
+void exec_divu(SPU& spu, rd, rs1, rs2);
+void exec_rem(SPU& spu, rd, rs1, rs2);
+void exec_remu(SPU& spu, rd, rs1, rs2);
+void exec_slt(SPU& spu, rd, rs1, rs2);
+void exec_sltu(SPU& spu, rd, rs1, rs2);
+void exec_xor(SPU& spu, rd, rs1, rs2);
+void exec_srl(SPU& spu, rd, rs1, rs2);
+void exec_sra(SPU& spu, rd, rs1, rs2);
+void exec_or(SPU& spu, rd, rs1, rs2);
+void exec_and(SPU& spu, rd, rs1, rs2);
+void exec_lui(SPU& spu, rd, imm);
+void exec_beq(SPU& spu, rs1, rs2, imm);
+void exec_bne(SPU& spu, rs1, rs2, imm);
+void exec_blt(SPU& spu, rs1, rs2, imm);
+void exec_bge(SPU& spu, rs1, rs2, imm);
+void exec_bltu(SPU& spu, rs1, rs2, imm);
+void exec_bgeu(SPU& spu, rs1, rs2, imm);
+void exec_jalr(SPU& spu, rd, rs1, imm);
+void exec_jal(SPU& spu, rd, imm);
 
 // Main decoder function
-uint32_t decode_and_execute(uint32_t insn, SPU& spu);
+uint32_t decode_and_execute(SPU& spu, uint32_t insn);
 
 #endif // DECODER_HPP

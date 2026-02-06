@@ -34,7 +34,7 @@ module SimInfra
         Field.new(name, from, to, value).freeze
     end
     def imm_field_part(from, to, order = nil)
-        ImmFieldPart.new(:immpart, from, to, order).freeze 
+        ImmFieldPart.new(:imm, from, to, order).freeze 
     end
 
     def assert(condition, msg = nil); raise msg if !condition; end
