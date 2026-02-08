@@ -16,65 +16,32 @@ module Decoder
     ]   
 
     INDENT = "    "
+    REGISTER_DATA_TYPE = "Register"
     
-    def self.generate_decoder_files(tree, ir, base_name)
+    def self.generate_decoder_file(tree, ir, base_name)
         # collect all incstructions for declarations
         declarations = []
         collect_instructions(tree, declarations)
         instructions = declarations.uniq
         
-        # genarate .hpp file
-        generate_header_file(instructions, ir, "#{base_name}.hpp")
-        
         # genarate .cpp file
         generate_cpp_file(tree, instructions, ir, "#{base_name}.cpp")
         
         puts "Decoder generated:"
-        puts "  - #{base_name}.hpp (header with declarations)"
         puts "  - #{base_name}.cpp (implementation)"
     end
     
     private
     
-    def self.generate_header_file(instructions, ir, output_file)
-        output = []
-        
-        output << "#ifndef DECODER_HPP"
-        output << "#define DECODER_HPP"
-        output << ""
-        output << "#include <cstdint>"
-        output << "#include <stdexcept>"
-        output << "#include \"op.h\""
-        output << ""
-        output << "// Execution functions declarations"
-        instructions.each do |insn_name|
-            args = get_instruction_fields_and_args(ir, insn_name.to_sym)[:args]
-            params = String.new()
-            args.each do |arg|
-                if (arg.name != :pc)
-                    params << ", #{arg.name.to_s}"
-                end        
-            end
-            output << "void exec_#{insn_name}(SPU& spu#{params});"
-        end
-        output << ""
-        output << "// Main decoder function"
-        output << "uint32_t decode_and_execute(SPU& spu, uint32_t insn);"
-        output << ""
-        output << "#endif // DECODER_HPP"
-        
-        File.write(output_file, output.join("\n"))
-    end
-    
     def self.generate_cpp_file(tree, instructions, ir, output_file)
         @output = []
         
         @output << "// Auto-generated decoder from YAML tree"
-        @output << "#include \"#{File.basename(output_file, '.cpp')}.hpp\""
+        @output << "#include \"op.h\""
         @output << ""
         
         @output << "// Main decoder implementation"
-        @output << "uint32_t decode_and_execute(SPU& spu, uint32_t insn) {"
+        @output << "uint32_t decode_and_execute(SPU& spu, #{REGISTER_DATA_TYPE} insn) {"
         @output << INDENT + "// Start decoding from the root"
         generate_switch_statement(tree, ir,  1, "insn")
         @output << INDENT + "return 0;"
@@ -199,5 +166,5 @@ module Decoder
     tree = YAML.load_file('result/decode_tree.yaml')
     ir = YAML.load_file('result/IR.yaml', permitted_classes: @allowed_classes, aliases: true)
     
-    generate_decoder_files(tree, ir, 'result/decoder')
+    generate_decoder_file(tree, ir, 'result/decoder')
 end

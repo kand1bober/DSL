@@ -20,6 +20,8 @@ allowed_classes = [
     SimInfra::PC,
 ]
 
+REGISTER_DATA_TYPE = "Register"
+
 BASE_OPS = {
     natural: {
         add: '+',
@@ -60,7 +62,7 @@ BASE_OPS = {
         unary: { # --- here are expressions, not statement
         ui8:  'uint8_t', 
         ui16: 'uint16_t', 
-        ui32: 'Register', 
+        ui32: REGISTER_DATA_TYPE, 
         i8:   'int8_t', 
         i16:  'int16_t',
         i32:  'int32_t',
@@ -158,14 +160,56 @@ def get_formal_params(insn)
     params = String.new() 
     insn[:args].each do |arg|
         if (arg.name != :pc)
-            params << ", Register par_#{arg.name.to_s}"
+            params << ", #{REGISTER_DATA_TYPE} par_#{arg.name.to_s}"
         end        
     end
     return params
 end
 
+def insert_code(filename, strings)
+    start_marker = "// Begin of auto-generated prototypes"
+    end_marker = "// End of auto-generated prototypes"
+    
+    content = File.read(filename)
+    
+    # check, that strings is an array of strings
+    code = Array(strings).join("\n")
+    
+    # pattern for searching markers
+    pattern = /(#{Regexp.escape(start_marker)}).*?(#{Regexp.escape(end_marker)})/m
+    
+    if content =~ pattern
+        # Replacing the existing block
+        replacement = "#{start_marker}\n#{code}\n#{end_marker}"
+        new_content = content.gsub(pattern, replacement)
+    else
+        # adding new block to the end
+        new_content = content + "\n#{start_marker}\n#{code}\n#{end_marker}\n"
+    end
+    
+    File.write(filename, new_content)
+end
+
 # load YAML
 ir_list = YAML.safe_load(File.read('result/IR.yaml'), permitted_classes: allowed_classes, aliases: true)
+
+# modify header file
+output = []
+output << "\t// Execution functions declarations"
+ir_list.each do |insn|
+    params = String.new()
+    name = insn[:name].to_s
+    insn[:args].each do |arg|
+        next if arg.name == :pc
+        params << ", #{REGISTER_DATA_TYPE} #{arg.name.to_s}"
+    end
+    output << "\tvoid exec_#{name}(SPU& spu#{params});"
+end
+output << ""
+output << "\t// Main decoder function"
+output << "\tuint32_t decode_and_execute(SPU& spu, #{REGISTER_DATA_TYPE} insn);"
+output << ""
+insert_code("result/op.h", output)
 
 # generate C++
 File.open("result/interpret.cpp", "w") do |f|
@@ -206,7 +250,7 @@ File.open("result/interpret.cpp", "w") do |f|
                             end
                         when :new_var
                             if (i == 1)
-                                f.puts("\tRegister #{code.oprnds[0].name};")
+                                f.puts("\t#{REGISTER_DATA_TYPE} #{code.oprnds[0].name};")
                             end
                         when :new_const 
                             # skip

@@ -1,8 +1,8 @@
 // Auto-generated decoder from YAML tree
-#include "decoder.hpp"
+#include "op.h"
 
 // Main decoder implementation
-uint32_t decode_and_execute(SPU& spu, uint32_t insn) {
+uint32_t decode_and_execute(SPU& spu, Register insn) {
     // Start decoding from the root
     // Extract bits [6:0] (width: 7)
     uint32_t field_6_0 = (insn) & (0x7f << 0);
