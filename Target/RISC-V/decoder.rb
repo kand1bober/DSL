@@ -18,15 +18,15 @@ module Decoder
     INDENT = "    "
     
     def self.generate_decoder_files(tree, ir, base_name)
-        # Собираем все инструкции для деклараций
+        # collect all incstructions for declarations
         declarations = []
         collect_instructions(tree, declarations)
         instructions = declarations.uniq
         
-        # Генерируем .hpp файл
+        # genarate .hpp file
         generate_header_file(instructions, ir, "#{base_name}.hpp")
         
-        # Генерируем .cpp файл
+        # genarate .cpp file
         generate_cpp_file(tree, instructions, ir, "#{base_name}.cpp")
         
         puts "Decoder generated:"
@@ -76,7 +76,7 @@ module Decoder
         @output << "// Main decoder implementation"
         @output << "uint32_t decode_and_execute(SPU& spu, uint32_t insn) {"
         @output << INDENT + "// Start decoding from the root"
-        generate_switch_statement(tree, 1, "insn")
+        generate_switch_statement(tree, ir,  1, "insn")
         @output << INDENT + "return 0;"
         @output << "}"
         
@@ -85,37 +85,25 @@ module Decoder
     
     def self.collect_instructions(node, instructions)
         if node.is_a?(Hash)
-        if node[:nodes]
-            node[:nodes].each_value do |child|
-            if child.is_a?(String) || child.is_a?(Symbol)
-                # Это лист - инструкция
-                instructions << child.to_s
-            elsif child.is_a?(Hash)
-                # Это поддерево
-                collect_instructions(child, instructions)
+            if node[:nodes]
+                node[:nodes].each_value do |child|
+                if child.is_a?(String) || child.is_a?(Symbol)
+                    # it is a leaf - instruction
+                    instructions << child.to_s
+                elsif child.is_a?(Hash)
+                    # it is subtree
+                    collect_instructions(child, instructions)
+                end
+                end
             end
-            end
-        end
         end
     end
     
-    def self.generate_switch_statement(node, indent_level, var_name)
+    def self.generate_switch_statement(node, ir, indent_level, var_name)
         switch_indent = INDENT * indent_level
         case_indent = INDENT * (indent_level + 1)
 
-        if node.is_a?(String) || node.is_a?(Symbol)
-        # Лист дерева - инструкция
-        @output << switch_indent + "exec_#{node}(spu, );"
-        @output << switch_indent + "return 0;"
-        return
-        end
-        
-        unless node[:nodes]
-        @output << indent + "// Empty node"
-        return
-        end
-        
-        # Определяем маску и сдвиг для извлечения битов
+        # Defining a mask and a shift to extract the bits
         msb = node[:range][0]
         lsb = node[:range][1]
         width = msb - lsb + 1
@@ -128,28 +116,29 @@ module Decoder
         @output << case_indent + "case 0x#{key.to_s(16)}: {"
         
         if child.is_a?(String) || child.is_a?(Symbol) # Leaf
-            values = String.new()
-            fields, args = get_instruction_fields_and_args(ir, child)
+            arg_values = String.new()
+            fields, args = get_instruction_fields_and_args(ir, child).values_at(:fields, :args)
+
             args.each do |arg| # past args in correct order
+                next if arg.name == :pc
+                field = fields.find { |field| field[:name] == arg.name} # find field with name of this arg 
+                
+                spaces = " " * "exec_#{child}(".length # arguments on different lines
+                arg_values << ",\n#{case_indent + INDENT}#{spaces}"
                 case arg.name 
                     when :rd, :rs1, :rs2
-                        field = fields.find { |field| field[:name] == arg.name} # find field with name of this arg 
                         width = field[:from] - field[:to] + 1
-                        values << ", (#{var_name} >> #{field[:to]}) & ((1 << #{width}) - 1)"
+                        arg_values << "(#{var_name} >> #{field[:to]}) & ((1 << #{width}) - 1)"
                     when :imm
-                        lo = fields.find { |field| field[:order] == :lo} 
-                        hi = fields.find { |field| field[:order] == :hi} 
-                        
+                        arg_values << "#{assemble_immediate(field.parts, var_name)}"
                 end
-                # extract field value
-
             end
+            @output << case_indent + INDENT + "exec_#{child}(spu#{arg_values});"
 
-            @output << case_indent + INDENT + "exec_#{child}(spu#{values});"
         elsif child.is_a?(Hash) # Subtree - recursive call
-            generate_switch_statement(child, indent_level + 2, var_name)
+            generate_switch_statement(child, ir, indent_level + 2, var_name)
         end
-        
+
         @output << case_indent + INDENT + "break;"
         @output << case_indent + "}"
     end
@@ -170,19 +159,43 @@ module Decoder
         insn ? {fields: insn[:fields], args: insn[:args]} : nil
     end
 
-        # 4. Использование
+    def self.assemble_immediate(parts, var_name)
+        # begin from 0
+        result = "0"
         
-        # # Пример: получить поля для инструкции 'add'
-        # add_fields = get_instruction_fields(instructions_data, :add)
-        # if add_fields
-        # puts "Поля инструкции add:"
-        # add_fields.each do |field|
-        #     puts "  #{field[:name]}: биты #{field[:from]}:#{field[:to]}, значение: #{field[:value]}"
-        # end
-        # end
+        parts.each do |part|
+            insn_from = part[:in_insn][:from]
+            insn_to = part[:in_insn][:to]
+            imm_from = part[:in_imm][:from]
+            imm_to = part[:in_imm][:to]
+            
+            insn_width = insn_from - insn_to + 1
+            imm_width = imm_from - imm_to + 1
+            
+            if part[:replicate]
+                # take a single-bit and replicate it to its full width
+                if insn_width == 1
+                    result = "(#{result}) | ((((#{var_name} >> #{insn_to}) & 1) ? ((1 << #{imm_width}) - 1) : 0) << #{imm_to})"
+                else
+                    raise "Replication only supported for single-bit sources"
+                end
+            else
+                # copying a range
+                if insn_width == imm_width
+                    mask = "(1 << #{insn_width}) - 1"
+                    result = "(#{result}) | (((#{var_name} >> #{insn_to}) & #{mask}) << #{imm_to})"
+                else
+                    raise "Different width of immediate part in instruction and immediate"
+                end
+            end
+        end
+
+        return result
+    end
 end
 
 module Decoder
+    # load decode tree and IR
     tree = YAML.load_file('result/decode_tree.yaml')
     ir = YAML.load_file('result/IR.yaml', permitted_classes: @allowed_classes, aliases: true)
     

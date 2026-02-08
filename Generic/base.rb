@@ -57,7 +57,7 @@ module SimInfra
             end
         end
         
-        ImmParts.new(:immparts, parts, shift)
+        ImmParts.new(:imm, parts, shift)
     end
 
     def assert(condition, msg = nil); raise msg if !condition; end
