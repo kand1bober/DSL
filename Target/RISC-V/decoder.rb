@@ -4,7 +4,7 @@ module Decoder
     @allowed_classes = [
         Symbol,
         SimInfra::Field,
-        SimInfra::ImmFieldPart,
+        SimInfra::ImmParts,
         SimInfra::Var,
         SimInfra::XReg,
         SimInfra::Imm,
@@ -48,7 +48,7 @@ module Decoder
         output << ""
         output << "// Execution functions declarations"
         instructions.each do |insn_name|
-            args = get_instruction_fields(ir, insn_name.to_sym)[:args]
+            args = get_instruction_fields_and_args(ir, insn_name.to_sym)[:args]
             params = String.new()
             args.each do |arg|
                 if (arg.name != :pc)

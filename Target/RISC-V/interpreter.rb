@@ -9,7 +9,7 @@ require 'yaml'
 allowed_classes = [
     Symbol,
     SimInfra::Field,
-    SimInfra::ImmFieldPart,
+    SimInfra::ImmParts,
     SimInfra::Var,
     SimInfra::XReg,
     SimInfra::Imm,

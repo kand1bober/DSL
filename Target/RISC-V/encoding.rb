@@ -52,31 +52,102 @@ module SimInfra
         return :I, [
             field(rd.name, 11, 7, :reg),
             field(rs1.name, 19, 15, :reg),
-            imm_field_part(31, 20),
-            funct3_field,
-            opcode_field,
+            imm_parts({parts: [
+                        {in_insn: {from: 31, to: 31}, in_imm: {from: 31, to: 11}, replicate: true},
+                        {in_insn: {from: 30, to: 20}, in_imm: {from: 10, to: 0},  replicate: false}
+                       ],
+                       shift: 0}),
+            funct3_field,   
+            opcode_field,   
         ], lead_bits([opcode_field, funct3_field])
     end
 
-    def format_s_b(funct3, rs1, rs2, opcode)
-        funct3_field= field(:funct3, 14, 12, funct3)
-        opcode_field= field(:opcode, 6, 0, opcode)   
+    #----- S -----
+    def format_s(name, rs1, rs2)
+        funct3 = {
+            sb: 0,
+            sh: 1,
+            sw: 2,
+        }[name]
 
-        return :R, [
-            imm_field_part(11, 7, :lo),
+        funct3_field= field(:funct3, 14, 12, funct3)
+        opcode_field= field(:opcode, 6, 0, 0b0100011)   
+
+        return :S, [
             field(rs1.name, 19, 15, :reg),
             field(rs2.name, 24, 20, :reg),
-            imm_field_part(31, 25, :hi),
+            imm_parts({parts: [
+                        {in_insn: {from: 31, to: 31}, in_imm: {from: 31, to: 11}, replicate: true},
+                        {in_insn: {from: 30, to: 25}, in_imm: {from: 10, to: 5},  replicate: false}, 
+                        {in_insn: {from: 11, to: 8}, in_imm: {from: 4, to: 1},    replicate: false},
+                        {in_insn: {from: 7, to: 7}, in_imm: {from: 0, to: 0},     replicate: false}
+                       ],
+                       shift: 0}),
             funct3_field,
             opcode_field,   
         ], lead_bits([opcode_field, funct3_field])
     end
 
-    def format_u_j(rd, opcode)
+    #----- B -----
+    def format_b(name, rs1, rs2)
+        funct3 = {
+            beq:  0,
+            bne:  1,
+            blt:  4,
+            bge:  5,
+            bltu: 6,
+            bgeu: 7,
+        }[name]
+
+        funct3_field= field(:funct3, 14, 12, funct3)
+        opcode_field= field(:opcode, 6, 0, 0b1100011)   
+
+        return :B, [
+            field(rs1.name, 19, 15, :reg),
+            field(rs2.name, 24, 20, :reg),
+            imm_parts({parts: [
+                        {in_insn: {from: 31, to: 31}, in_imm: {from: 31, to: 12}, replicate: true},
+                        {in_insn: {from: 7, to: 7}, in_imm: {from: 11, to: 11},   replicate: false}, 
+                        {in_insn: {from: 30, to: 25}, in_imm: {from: 10, to: 5},  replicate: false},
+                        {in_insn: {from: 11, to: 8}, in_imm: {from: 4, to: 1},    replicate: false}
+                       ],
+                       shift: 1}),
+            funct3_field,
+            opcode_field,   
+        ], lead_bits([opcode_field, funct3_field])
+    end
+
+    #----- U -----
+    def format_u(name, rd) 
+        opcode = {   
+            lui:   0b0110111, 
+            auipc: 0b0010111,
+        }[name]
+
         opcode_field = field(:opcode, 6, 0, opcode)
-        return :R, [
+        return :U, [
             field(rd.name, 11, 7, :reg),
-            imm_field_part(31, 12),
+            imm_parts({parts: [
+                        {in_insn: {from: 31, to: 20}, in_imm: {from: 31, to: 20},  replicate: false},
+                        {in_insn: {from: 19, to: 12}, in_imm: {from: 19, to: 12},  replicate: false}, 
+                       ],
+                       shift: 12}),
+            opcode_field,
+        ], lead_bits([opcode_field])
+    end
+
+    #----- J -----
+    def format_j(name, rd) 
+        opcode_field = field(:opcode, 6, 0, 0b1101111)
+        return :J, [
+            field(rd.name, 11, 7, :reg),
+            imm_parts({parts: [
+                        {in_insn: {from: 31, to: 31}, in_imm: {from: 31, to: 20},  replicate: true},
+                        {in_insn: {from: 19, to: 12}, in_imm: {from: 19, to: 12},  replicate: false},
+                        {in_insn: {from: 20, to: 20}, in_imm: {from: 11, to: 11},  replicate: false}, 
+                        {in_insn: {from: 30, to: 21}, in_imm: {from: 10, to: 1},   replicate: false}, 
+                       ],
+                       shift: 1}),
             opcode_field,
         ], lead_bits([opcode_field])
     end
@@ -139,7 +210,10 @@ module SimInfra
         return :I, [
             field(rd.name, 11, 7, :reg),
             field(rs1.name, 19, 15, :reg),
-            imm_field_part(24, 20),
+            imm_parts({parts: [
+                        {in_insn: {from: 24, to: 20}, in_imm: {from: 4, to: 0},  replicate: false}
+                       ],
+                       shift: 0}),
             funct_3_field,
             funct_7_field,
             opcode_field,
@@ -151,44 +225,6 @@ module SimInfra
             jalr: 0,
         }[name]
         format_i(rs1, funct3, rd, 0b1100111)
-    end
-
-    #----- S -----
-    def format_s(name, rs1, rs2) 
-        funct3 = {
-            sb: 0,
-            sh: 1,
-            sw: 2,
-        }[name]
-        format_s_b(funct3, rs1, rs2, 0b0100011)
-    end
-
-    #----- B -----
-    def format_b(name, rs1, rs2)
-        funct3 = {
-            beq:  0,
-            bne:  1,
-            blt:  4,
-            bge:  5,
-            bltu: 6,
-            bgeu: 7,
-        }[name]
-        format_s_b(funct3, rs1, rs2, 0b1100011)
-    end
-
-    #----- U -----
-    def format_u(name, rd) 
-        opcode = 
-        {   
-            lui:   0b0110111, 
-            auipc: 0b0010111,
-        }[name]
-        format_u_j(rd, opcode)
-    end
-
-    #----- J -----
-    def format_j(name, rd) 
-        format_u_j(rd, 0b1101111)
     end
 
 end

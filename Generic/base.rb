@@ -28,13 +28,36 @@ module SimInfra
 
     # new data types(classes)
     Field = Struct.new(:name, :from, :to, :value)
-    ImmFieldPart = Struct.new(:name, :from, :to, :order) #left are hi, right are lo
-
+    ImmParts = Struct.new(:name, :parts, :shift)
+    
     def field(name, from, to, value = nil)
         Field.new(name, from, to, value).freeze
     end
-    def imm_field_part(from, to, order = nil)
-        ImmFieldPart.new(:imm, from, to, order).freeze 
+    
+    # parts of immediate and their place in result number
+    def imm_parts(params)
+        # parts - array of hashes
+        # shift - param
+        parts, shift = params[:parts], params[:shift]
+
+        # check correctness of input data
+        parts.each do |part|
+            insn_part_len = part[:in_insn][:from] - part[:in_insn][:to] + 1
+            imm_part_len = part[:in_imm][:from] - part[:in_imm][:to] + 1
+        
+            if insn_part_len != imm_part_len
+                if insn_part_len == 1 && part[:replicate] == true
+                    # разрешено: 1 бит → несколько бит
+                else
+                    str = "\nimm parts are not the same length:\n" + 
+                        "in instruction: #{insn_part_len}\n" + 
+                        "in immediate: #{imm_part_len}\n" 
+                    raise str
+                end
+            end
+        end
+        
+        ImmParts.new(:immparts, parts, shift)
     end
 
     def assert(condition, msg = nil); raise msg if !condition; end
