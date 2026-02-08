@@ -58,6 +58,9 @@ build-iPhoneSimulator/
 *.yaml
 
 
+.vscode
+
+decoder.cpp
+interpret.cpp
 test.rb
 TODO
-.vscode
