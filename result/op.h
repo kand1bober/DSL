@@ -2,6 +2,9 @@
 #include <array>
 #include <stdbool.h>
 #include <stdexcept>
+#include <vector>
+
+#include "decoder.h"
 
 #ifndef OPERATIONS_HEADER
 #define OPERATIONS_HEADER 
@@ -22,6 +25,24 @@ class SPU {
 public:
     CPU cpu;
     Ram mem;
+
+    void run(const std::vector<Register>& program) {
+        cpu.pc = 0;
+
+        while (cpu.pc < program.size()) {
+            //fetch
+            uint32_t insn = program[cpu.pc];
+
+            //decode
+            DecodedOperation operation = decode(*this, insn);
+
+            //execute
+            operation(*this);
+
+            //update pc 
+            cpu.pc += 4;
+        }
+    }
 };
 
 Register bit_extract(SPU& spu, Register src, Register from, Register to);
@@ -88,9 +109,6 @@ Register zero_extend(SPU& spu, Register a, Register b);
 	void exec_lui(SPU& spu, Register rd, Register imm);
 	void exec_auipc(SPU& spu, Register rd, Register imm);
 	void exec_jal(SPU& spu, Register rd, Register imm);
-
-	// Main decoder function
-	auto decode(SPU& spu, Register insn);
 
 // End of auto-generated prototypes
 

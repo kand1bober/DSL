@@ -206,9 +206,6 @@ ir_list.each do |insn|
     output << "\tvoid exec_#{name}(SPU& spu#{params});"
 end
 output << ""
-output << "\t// Main decoder function"
-output << "\tauto decode(SPU& spu, #{REGISTER_DATA_TYPE} insn);" #TODO: переместить этот кусок в decoder
-output << ""
 insert_code("result/op.h", output)
 
 # generate C++
