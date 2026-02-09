@@ -207,7 +207,7 @@ ir_list.each do |insn|
 end
 output << ""
 output << "\t// Main decoder function"
-output << "\tuint32_t decode_and_execute(SPU& spu, #{REGISTER_DATA_TYPE} insn);"
+output << "\tauto decode(SPU& spu, #{REGISTER_DATA_TYPE} insn);" #TODO: переместить этот кусок в decoder
 output << ""
 insert_code("result/op.h", output)
 

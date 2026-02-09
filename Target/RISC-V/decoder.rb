@@ -28,7 +28,7 @@ module Decoder
         generate_cpp_file(tree, instructions, ir, "#{base_name}.cpp")
         
         puts "Decoder generated:"
-        puts "  - #{base_name}.cpp (implementation)"
+        puts "  - #{base_name}.cpp"
     end
     
     private
@@ -37,11 +37,14 @@ module Decoder
         @output = []
         
         @output << "// Auto-generated decoder from YAML tree"
+        @output << "#include <functional>"
+        @output << "#include <tuple>"
+        @output << "#include <any>"
         @output << "#include \"op.h\""
         @output << ""
         
         @output << "// Main decoder implementation"
-        @output << "uint32_t decode_and_execute(SPU& spu, #{REGISTER_DATA_TYPE} insn) {"
+        @output << "auto decode(SPU& spu, #{REGISTER_DATA_TYPE} insn) {"
         @output << INDENT + "// Start decoding from the root"
         generate_switch_statement(tree, ir,  1, "insn")
         @output << INDENT + "return 0;"

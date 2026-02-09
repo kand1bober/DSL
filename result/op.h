@@ -90,7 +90,7 @@ Register zero_extend(SPU& spu, Register a, Register b);
 	void exec_jal(SPU& spu, Register rd, Register imm);
 
 	// Main decoder function
-	uint32_t decode_and_execute(SPU& spu, Register insn);
+	auto decode(SPU& spu, Register insn);
 
 // End of auto-generated prototypes
 
