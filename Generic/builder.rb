@@ -43,8 +43,9 @@ module SimInfra
             @info.asm = instance_eval(&block) #in result string from &block is written in @info.asm
         end
         
-        def code(&block)
+        def code(&block1)
             @info.code = scope = Scope.new(nil) # root scope
+            # create tmp vars, if they were mentioned by user
             @info.args.each do |arg|
                 scope.var(arg.name, :i32) # example :rd --> scope.rd, return obj. Var 
                 if [:rs1, :rs2].include?(arg.name)
@@ -52,11 +53,11 @@ module SimInfra
                 elsif [:imm].include?(arg.name)
                     scope.stmt(:getimm, [arg.name, arg])
                 elsif[:pc].include?(arg.name)
-                    scope.stmt(:getpc, [arg.name, arg])                    
+                    scope.stmt(:getpc, [arg.name, arg])                 
                 end
             end
 
-            scope.instance_eval(&block)
+            scope.instance_eval(&block1)
 
             @info.args.each do |arg|
                 if arg.name == :rd

@@ -14,6 +14,7 @@ module SimInfra
 
         private def get_scope()
             cur = @oprnds[0]
+            puts "#{@name} #{cur}"
             while (cur.class != Var)
                 cur = cur.oprnds[0]
             end

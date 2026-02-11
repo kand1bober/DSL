@@ -47,6 +47,8 @@ module SimInfra
         end
 
 #-------- Operators in code tree ---------
+        # only for expressions, because it doesn't create tmp variable, 
+        # to connect with previous and following statements like statements do
         def un_op(a, op)
             a = resolve_const(a); 
             expr(op, [a])
@@ -69,17 +71,15 @@ module SimInfra
         # it is possible to make unary operations with the choice of constants, 
         # then you need another type of operation.
         [:ui8, :ui16, :ui32,
-         :i8,  :i16,  :i32,
-         :deref, # dereference pointer
-         :ref8, :ref16, :ref32, # make pointer
-        ].each do |op|
+         :i8,  :i16,  :i32].each do |op|
             define_method(op) { |a| un_op(a, op) }
         end     
 
         [8, 16, 32].each do |num| 
-            mem_name = "mem" + num.to_s
-            ref_name = "ref" + num.to_s
-            define_method(mem_name) { |a| deref(send(ref_name, a)) } # take value from addr
+            readMem = 'readMem' + num.to_s
+            writeMem = 'writeMem' + num.to_s
+            define_method(readMem) { |addr| un_op(addr, readMem) }
+            define_method(writeMem) { |addr| un_op(addr, readMem) }
         end
         
         # binary 

@@ -57,21 +57,24 @@ module RV32I
         make_i_jump(name)
     end
 
-    def self.make_i_mem(name)
+    def self.make_i_mem(name, &read_mem)
         Instruction(name, XReg(:rd), XReg(:rs1), Imm()) {
             encoding *format_i_mem(name.to_s.to_sym, rd, rs1)
             asm { "#{name} #{rd}, #{imm}(#{rs1})" }
-            # code { rd[]= rs1.send(name, imm) }
             code {
-                # addr = rs1 + offset 
-                # data = readMem(addr); # simulation side / implementation defined  
-                # rd.write(data)
+                addr = var(:addr, :i32) #create variable
+                addr[]= add(rs1, se(imm, 12))
+                instance_exec(addr, &read_mem) 
+                # rd[]= readMem8(addr)
             }                   
         }
     end
-    I_MEM_TYPE_INSNS.each do |name|
-        make_i_mem(name)
-    end
+    # readMem<num> simulation side / implementation defined
+    make_i_mem(:lb)  { |addr| rd[]= se(readMem8(addr),  8) }
+    make_i_mem(:lh)  { |addr| rd[]= se(readMem16(addr), 8) }
+    make_i_mem(:lw)  { |addr| rd[]= readMem32(addr) }
+    make_i_mem(:lbu) { |addr| rd[]= ze(readMem8(addr),  8) }
+    make_i_mem(:lhu) { |addr| rd[]= ze(readMem16(addr), 8) }
 
     #---------- S ----------
     def self.make_s(name)
@@ -95,7 +98,7 @@ module RV32I
             }
         }
     end
-    
+
     [{name: :beq, cond: 'equ'}, 
      {name: :bne, cond: 'not_equ'},
      {name: :blt, cond: 'less_signed'}, 
