@@ -42,6 +42,9 @@ Register rem_unsign(SPU& spu, Register a, Register b) {
     return a % b;
 }
 
+void readMem8(SPU, uint16, uint32_t*) {}
+void readMem16(SPU, uint16, uint32_t*) {}
+void readMem32(SPU, uint16, uint32_t*) {}
 
 // operation '>>>' in code tree is sra(shift right ariphmetic)
 Register op_sra(SPU& spu, Register a, Register b) {

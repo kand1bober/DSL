@@ -6,6 +6,7 @@
 #include <functional>
 
 class SPU;
+typedef uint32_t Register;
 
 template<typename... Args>
 using SPUFunctionPtr = void(*)(SPU&, Args...);

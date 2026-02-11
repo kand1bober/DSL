@@ -127,7 +127,7 @@ def get_operand_val(oprnd)
             if (op_type == :unary)
                 return "(#{op_val})(#{get_operand_val(oprnd.oprnds[0])})"
             elsif (op_type == :unary_mem)
-                return "(#{op_val})(#{get_operand_val(oprnd.oprnds[0])} + &spu.mem.data)"
+                return "(#{op_val})(#{get_operand_val(oprnd.oprnds[0])} + &spu.mem.data[0])"
             elsif (op_type == :unary_prefix)
                 return "#{op_val}(#{get_operand_val(oprnd.oprnds[0])})"
             else 
@@ -216,6 +216,7 @@ File.open("result/interpret.cpp", "w") do |f|
     ir_list.each do |insn|
         name = insn[:name].to_s
         f.puts("void exec_#{name}(SPU &spu#{get_formal_params(insn)}) {")
+        f.puts("\tstd::cout << \"#{name}\" << std::endl;")
 
         # 0th -- save :let stmt ids, that are used in cond_op, to skip interpreting them on 1st cycle 
         # 2nd -- interpret setting of registers (:setpc, :setreg for :rd)

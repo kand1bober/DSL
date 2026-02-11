@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdexcept>
 #include <vector>
+#include <iostream>
 
 #include "decoder.h"
 
@@ -18,7 +19,7 @@ struct CPU {
 };
 
 struct Ram {
-    std::array<Register, 1024> data;
+    std::array<uint8_t, 4096> data;
 };
 
 class SPU {
@@ -34,13 +35,14 @@ public:
             uint32_t insn = program[cpu.pc];
 
             //decode
+            std::cout << "decoding: " << std::hex << insn << std::endl;
             DecodedOperation operation = decode(*this, insn);
 
             //execute
             operation(*this);
 
             //update pc 
-            cpu.pc += 4;
+            cpu.pc += 1;
         }
     }
 };

@@ -15,6 +15,8 @@ module DecodeTree
         SimInfra::Constant,
         SimInfra::PC,
     ]
+
+    INDENT = "    "
     
     def self.make_tree(insns)
         data = YAML.safe_load(File.read('result/IR.yaml'), permitted_classes: @allowed_classes, aliases: true)
@@ -25,7 +27,11 @@ module DecodeTree
         lead_bits = []
         selected_insns.map do |insn| 
             lead_bits << {insn_name: insn[:name], bits: insn[:lead_bits]}
-        end
+        end 
+        # puts "insns:"
+        # lead_bits.each do |insn|
+        #     puts "\t#{insn[:insn_name]}"
+        # end
 
         tree = make_head(lead_bits)
 
@@ -62,7 +68,7 @@ module DecodeTree
             
             is_leaf, leaf, subtree = make_child(actual_node,
                                                 separ_mask,
-                                                lead_bits)
+                                                lead_bits, 1)
 
             if (is_leaf == true)
                 tree[:nodes][actual_node] = leaf[:insn_name]
@@ -76,15 +82,23 @@ module DecodeTree
         return tree
     end
 
-    def self.make_child(node, separ_mask, lead_bits) 
+    def self.make_child(node, separ_mask, lead_bits, indent_num) 
         sublist = filter_insns(lead_bits, node, separ_mask)
         
     # this node is leaf
         if sublist.empty?
             return [nil, nil, nil]
         elsif sublist.length == 1 
+            # puts INDENT*indent_num + "leaf(node= #{node}, separ_mask= #{separ_mask}):"
+            # puts INDENT*indent_num + "#{sublist[0][:insn_name]}, #{sublist[0][:bits]}\n\n"
             return [true, sublist[0], nil]
         end
+
+
+        # puts INDENT*indent_num + "sublist(node= #{node}, separ_mask= #{separ_mask}):\n"
+        # sublist.each do |item|
+        #     puts INDENT*indent_num + "#{item[:insn_name]}, #{item[:bits]}"
+        # end
 
     # this node has more instructions   
         # remove previous lead_bits from consideration by overwriting with 'x'
@@ -111,7 +125,7 @@ module DecodeTree
 
             is_leaf, leaf, child_subtree = make_child(actual_node,
                                         new_mask,
-                                        sublist)
+                                        sublist, indent_num + 1)
 
             if (is_leaf == true)
                 cur_subtree[:nodes][new_node << lsb] = leaf[:insn_name]
@@ -183,6 +197,7 @@ module DecodeTree
         # find a range with a largest width
         if maj_ranges.any?
             largest = maj_ranges.max_by { |range| range[:lsb] - range[:msb] + 1 }
+            # puts "major range: #{largest[:msb]}, #{largest[:lsb]}\n\n"
             return [largest[:msb], largest[:lsb]]
         else
             return [nil, nil]

@@ -101,10 +101,10 @@ module SimInfra
             define_method(op) { |a, b, c| ternary_op(a, b, c, op)}
         end
 
-        # enumeration operator
-        def list_op(attrs= nil, &block)
-            self.instance_eval(&block)
-        end
+        # # enumeration operator
+        # def list_op(attrs= nil, &block)
+        #     self.instance_eval(&block)
+        # end
         
         # conditional operator
         def cond_op(attrs= nil, a, &block)
@@ -147,8 +147,8 @@ module SimInfra
         def srli(a, b) op_srl(a, bit_extract(b, 4, 0)) end
         def srai(a, b) op_sra(a, bit_extract(b, 4, 0)) end
             #--- I_MEM ---
-        # these operations can also be described as 'op(a, imm, b)' but without 
-        # 'list_op()' and 'rd[]=' parts by writing 'rd=' in field 'code' in Target  
+        # these operations can also be described as 'op(a, imm, b)' but without
+        # 'list_op()' and 'rd[]=' parts by writing 'rd[]=' in field 'code' in Target
         def lb(a, imm)  se(mem8(add(a,  se(imm, 12))), 8)  end 
         def lh(a, imm)  se(mem16(add(a, se(imm, 12))), 16) end
         def lw(a, imm)     mem32(add(a, se(imm, 12)))      end

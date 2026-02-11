@@ -67,6 +67,7 @@ module Decoder
         output << "#include <functional>"
         output << ""
         output << "class SPU;"
+        output << "typedef uint32_t Register;"
         output << ""
         output << "template<typename... Args>\n" +
                     "using SPUFunctionPtr = void(*)(SPU&, Args...);\n\n" +

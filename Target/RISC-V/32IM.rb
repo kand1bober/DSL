@@ -45,7 +45,11 @@ module RV32I
         Instruction(name, XReg(:rd), XReg(:rs1), Imm(), PC()) {
             encoding *format_i_jump(name.to_s.to_sym, rd, rs1)
             asm { "#{name} #{rd}, #{imm}(#{rs1})" }
-            code { send(name, rd, imm, rs1, pc) }                       
+            code { 
+                rd[]= add(pc, 4)
+                # pc[]= send(:and, add(rs1, se(imm, 12)), ~0x1)
+                pc[]= self.and(add(rs1, se(imm, 12)), ~0x1)
+            }                       
         }
     end
     I_JUMP_TYPE_INSNS.each do |name|
@@ -56,7 +60,12 @@ module RV32I
         Instruction(name, XReg(:rd), XReg(:rs1), Imm()) {
             encoding *format_i_mem(name.to_s.to_sym, rd, rs1)
             asm { "#{name} #{rd}, #{imm}(#{rs1})" }
-            code { rd[]= rs1.send(name, imm) }                       
+            # code { rd[]= rs1.send(name, imm) }
+            code {
+                # addr = rs1 + offset 
+                # data = readMem(addr); # simulation side / implementation defined  
+                # rd.write(data)
+            }                   
         }
     end
     I_MEM_TYPE_INSNS.each do |name|
@@ -104,7 +113,10 @@ module RV32I
         Instruction(name, XReg(:rd), Imm(), PC()) {
             encoding *format_j(name.to_s.to_sym, rd)
             asm { "#{name} #{rd}, #{imm}" }
-            code { send(name, rd, imm, pc) }                       
+            code { 
+                rd[]= add(pc, 4)
+                pc.add_assign se(op_sll(imm, 1), 21)
+            }                       
         }
     end
     J_TYPE_INSNS.each do |name|
