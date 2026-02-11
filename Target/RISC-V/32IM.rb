@@ -47,8 +47,9 @@ module RV32I
             asm { "#{name} #{rd}, #{imm}(#{rs1})" }
             code { 
                 rd[]= add(pc, 4)
-                # pc[]= send(:and, add(rs1, se(imm, 12)), ~0x1)
-                pc[]= self.and(add(rs1, se(imm, 12)), ~0x1)
+                # You need to write .self, if custom method name conflicts with ruby methods
+                # example: and, or, xor
+                pc[]= self.and(add(rs1, se(imm, 12)), ~0x1) 
             }                       
         }
     end
@@ -85,15 +86,23 @@ module RV32I
     end
 
     #---------- B ----------
-    def self.make_b(name)
+    def self.make_b(name, cond)
         Instruction(name, XReg(:rs1), XReg(:rs2), Imm(), PC()) {
             encoding *format_b(name.to_s.to_sym, rs1, rs2)
             asm { "#{name} #{rs1}, #{rs2}, #{imm}" }    
-            code { send(name, rs1, rs2, imm, pc) }
+            code { 
+                pc.add_assign ternary(send(cond, rs1, rs2), se(op_sll(imm, 1), 13), 0)   
+            }
         }
     end
-    B_TYPE_INSNS.each do |name|
-        make_b(name)
+    
+    [{name: :beq, cond: 'equ'}, 
+     {name: :bne, cond: 'not_equ'},
+     {name: :blt, cond: 'less_signed'}, 
+     {name: :bge, cond: 'more_equal_signed'},
+     {name: :bltu, cond: 'less_unsign'},
+     {name: :bgeu, cond: 'more_equal_unsign'}].each do |insn|
+        make_b(insn[:name], insn[:cond])
     end
 
     #---------- U ----------

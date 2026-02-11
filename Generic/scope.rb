@@ -100,11 +100,6 @@ module SimInfra
         [:bit_extract, :ternary].each do |op|
             define_method(op) { |a, b, c| ternary_op(a, b, c, op)}
         end
-
-        # # enumeration operator
-        # def list_op(attrs= nil, &block)
-        #     self.instance_eval(&block)
-        # end
         
         # conditional operator
         def cond_op(attrs= nil, a, &block)
@@ -147,42 +142,20 @@ module SimInfra
         def srli(a, b) op_srl(a, bit_extract(b, 4, 0)) end
         def srai(a, b) op_sra(a, bit_extract(b, 4, 0)) end
             #--- I_MEM ---
-        # these operations can also be described as 'op(a, imm, b)' but without
-        # 'list_op()' and 'rd[]=' parts by writing 'rd[]=' in field 'code' in Target
         def lb(a, imm)  se(mem8(add(a,  se(imm, 12))), 8)  end 
         def lh(a, imm)  se(mem16(add(a, se(imm, 12))), 16) end
         def lw(a, imm)     mem32(add(a, se(imm, 12)))      end
         def lbu(a, imm) ze(mem8(add(a,  se(imm, 12))), 8)  end
         def lhu(a, imm) ze(mem16(add(a, se(imm, 12))), 16) end
-            #--- I_JUMP ---
-        def jalr(a, imm, b, pc) list_op() { rd[]= add(pc, 4) 
-                                            pc[]= send(:and, add(b, se(imm, 12)), ~0x1)} end
 
         #----- S -----
         def sb(a, imm, b) (mem8(add(a, se(imm, 12)))).[]= ui8(bit_extract(b, 7, 0)) end
         def sh(a, imm, b) (mem16(add(a, se(imm, 12)))).[]= ui16(bit_extract(b, 16, 0)) end
         def sw(a, imm, b) (mem32(add(a, se(imm, 12)))).[]= b end
 
-        #----- B -----
-        def beq(a, b, imm, pc) cond_op(equ(a, b)) { pc.add_assign se(op_sll(imm, 1), 12) } end
-
-        def bne(a, b, imm, pc) cond_op(not_equ(a, b)) { pc.add_assign se(op_sll(imm, 1), 12) } end
-
-        def blt(a, b, imm, pc) cond_op(less_signed(a, b)) { pc.add_assign se(op_sll(imm, 1), 12) } end
-
-        def bge(a, b, imm, pc) cond_op(more_equal_signed(a, b)) { pc.add_assign se(op_sll(imm, 1), 12) } end
-
-        def bltu(a, b, imm, pc) cond_op(less_unsign(a, b)) { pc.add_assign se(op_sll(imm, 1), 12) } end
-                                 
-        def bgeu(a, b, imm, pc) cond_op(more_equal_unsign(a, b)) { pc.add_assign se(op_sll(imm, 1), 12) } end
-
         #----- U -----
         def lui(imm, pc) op_sll(imm, 12) end
         def auipc(imm, pc) add(pc, op_sll(imm, 12)) end
-
-        #----- J -----
-        def jal(a, imm, pc) list_op() { rd[]= add(pc, 4)
-                                        pc.add_assign se(op_sll(imm, 1), 20)} end
 
 #-----------------------------------------
     end
