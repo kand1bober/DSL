@@ -33,8 +33,8 @@ module Decoder
         generate_cpp_file(tree, instructions, ir, var_name)
         
         puts "Decoder generated:"
-        puts "  - decoder.cpp"
-        puts "  - decoder.h"
+        puts "  - decode.cpp"
+        puts "  - decode.h"
     end
     
     private
@@ -42,7 +42,7 @@ module Decoder
     def self.generate_cpp_file(tree, instructions, ir, var_name)
         @output = []
         @output << "// Auto-generated decoder from YAML tree"
-        @output << "#include \"decoder.h\""
+        @output << "#include \"decode.h\""
         @output << ""
         @output << "Instruction decode(SPU& spu, #{REGISTER_DATA_TYPE} #{var_name}) {"
         @output << "\tInstruction insn{};"
@@ -50,7 +50,7 @@ module Decoder
         generate_switch_statement(tree, ir,  1, var_name)
         @output << "}"
         
-        File.write('result/generated/decoder.cpp', @output.join("\n"))
+        File.write('result/generated/decode.cpp', @output.join("\n"))
     end
       
     def self.generate_header_file(instructions, ir, var_name)
@@ -87,7 +87,7 @@ module Decoder
         output << "Instruction decode(SPU& spu, #{REGISTER_DATA_TYPE} #{var_name});\n"    
         output << "#endif"
         
-        File.write('result/generated/decoder.h', output.join("\n"))
+        File.write('result/generated/decode.h', output.join("\n"))
     end
     
     def self.collect_instructions(node, instructions)

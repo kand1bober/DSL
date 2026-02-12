@@ -64,7 +64,7 @@ end
 # 5. Загрузка ELF
 
 # NICE TO HAVE (6 баллов)
-# 1. Убрать избыточность для памяти
+# + 1. Убрать избыточность для памяти
 # 2. Реструктуризация проекта (codegen лежит отдельно, статические -- отдельно)
 # 3. RegFile Codegen
 # 4. ECALL
@@ -73,24 +73,5 @@ end
 # в 32IM можно поменять
 # code { rd[]= rs1 name.op rs2 }                      
 
-# в Декодере переделать на:
-# enum Insn : uint64_t {
-#     //
-#     //
-#     //
-# }
 
-# // Main decoder implementation
-# Instruction decode(uint32_t machine_word) {
-#     Instruction insn{}; // fill UndefinedOp
-
-#     if (machine_word == 0x666) {
-#         insn.op = Insn::ADD;
-#         insn.rd = bit_extract(machine_word, 11, 16);
-#         // fill struct 
-#         return insn;
-#     }
-
-#     return insn;
-# }
 

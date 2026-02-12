@@ -9,7 +9,7 @@ class SPU;
 typedef uint32_t Register;
 
 struct DecodedOperands {
-	Register a;
+    Register a;
 	Register b;
 	Register c;
 };
