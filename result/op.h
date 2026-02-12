@@ -8,7 +8,7 @@
 #include "decoder.h"
 
 #ifndef OPERATIONS_HEADER
-#define OPERATIONS_HEADER 
+#define OPERATIONS_HEADER
 
 typedef uint32_t Register;
 typedef int32_t  SignedRegister;
@@ -36,10 +36,9 @@ public:
 
             //decode
             std::cout << "decoding: " << std::hex << insn << std::endl;
-            DecodedOperation operation = decode(*this, insn);
+            DecodedOperands operation = decode(*this, insn);
 
             //execute
-            operation(*this);
 
             //update pc 
             cpu.pc += 1;

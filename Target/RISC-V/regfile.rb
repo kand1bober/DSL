@@ -73,7 +73,6 @@ end
 # в 32IM можно поменять
 # code { rd[]= rs1 name.op rs2 }                      
 
-
 # в Декодере переделать на:
 # enum Insn : uint64_t {
 #     //
@@ -94,10 +93,4 @@ end
 
 #     return insn;
 # }
-
-
-
-# в Интерпретаторе:
-# rd = *((uint32_t*)(_tmp100 + &spu.mem.data[0])); // read32
-
 

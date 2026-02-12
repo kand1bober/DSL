@@ -192,7 +192,7 @@ def insert_code(filename, strings)
 end
 
 # load YAML
-ir_list = YAML.safe_load(File.read('result/IR.yaml'), permitted_classes: allowed_classes, aliases: true)
+ir_list = YAML.safe_load(File.read('result/generated/IR.yaml'), permitted_classes: allowed_classes, aliases: true)
 
 # modify header file
 output = []
@@ -210,7 +210,7 @@ output << ""
 insert_code("result/op.h", output)
 
 # generate C++
-File.open("result/interpret.cpp", "w") do |f|
+File.open("result/generated/interpret.cpp", "w") do |f|
     f.puts("#include \"op.h\"\n\n")
 
     # for each insn from IR tree
@@ -256,4 +256,4 @@ File.open("result/interpret.cpp", "w") do |f|
     end
 end
 
-puts("C++ interpreter generated in 'interpret.cpp'")
+puts("C++ interpreter generated in 'result/generated/interpret.cpp'")

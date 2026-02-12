@@ -10,11 +10,11 @@ module SimInfra
         require 'yaml'
         yaml_data = YAML.dump(@@instructions.map(&:to_h))
 
-        File.open("result/IR.yaml", "w") do |file|
+        File.open("result/generated/IR.yaml", "w") do |file|
             file.write(yaml_data)
         end
 
-        puts "IR made in 'result/IR.yaml'"
+        puts "IR made in 'result/generated/IR.yaml'"
     end
 
     # reset state

@@ -19,7 +19,7 @@ module DecodeTree
     INDENT = "    "
     
     def self.make_tree(insns)
-        data = YAML.safe_load(File.read('result/IR.yaml'), permitted_classes: @allowed_classes, aliases: true)
+        data = YAML.safe_load(File.read('result/generated/IR.yaml'), permitted_classes: @allowed_classes, aliases: true)
         
         #select instructions from 'insns' argument
         selected_insns = data.select { |insn| insns.include?(insn[:name]) }
@@ -36,9 +36,9 @@ module DecodeTree
         tree = make_head(lead_bits)
 
         # dump tree
-        File.write('result/decode_tree.yaml', tree.to_yaml)
+        File.write('result/generated/decode_tree.yaml', tree.to_yaml)
 
-        puts "decode tree made in 'result/decode_tree.yaml'"
+        puts "decode tree made in 'result/generated/decode_tree.yaml'"
     end
 
     INSN_BIT_LEN = 32

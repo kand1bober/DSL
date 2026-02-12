@@ -24,11 +24,13 @@ module Decoder
         collect_instructions(tree, declarations)
         instructions = declarations.uniq
 
+        var_name = "machine_word"
+        
         # genarate .h file
-        generate_header_file(instructions, ir)
+        generate_header_file(instructions, ir, var_name)    
         
         # genarate .cpp file
-        generate_cpp_file(tree, instructions, ir)
+        generate_cpp_file(tree, instructions, ir, var_name)
         
         puts "Decoder generated:"
         puts "  - decoder.cpp"
@@ -37,51 +39,55 @@ module Decoder
     
     private
     
-    def self.generate_cpp_file(tree, instructions, ir)
+    def self.generate_cpp_file(tree, instructions, ir, var_name)
         @output = []
-        
         @output << "// Auto-generated decoder from YAML tree"
-        # @output << "#include <functional>"
-        # @output << "#include <tuple>"
-        # @output << "#include <utility>"
-        @output << "#include \"op.h\""
+        @output << "#include \"decoder.h\""
         @output << ""
-        @output << "// Main decoder implementation"
-        @output << "DecodedOperation decode(SPU& spu, #{REGISTER_DATA_TYPE} insn) {"
-        @output << INDENT + "// Start decoding from the root"
-        generate_switch_statement(tree, ir,  1, "insn")
-        # @output << INDENT + "return 0;"
+        @output << "Instruction decode(SPU& spu, #{REGISTER_DATA_TYPE} #{var_name}) {"
+        @output << "\tInstruction insn{};"
+        @output << ""
+        generate_switch_statement(tree, ir,  1, var_name)
         @output << "}"
         
-        File.write('result/decoder.cpp', @output.join("\n"))
+        File.write('result/generated/decoder.cpp', @output.join("\n"))
     end
       
-    def self.generate_header_file(instructions, ir)
+    def self.generate_header_file(instructions, ir, var_name)
         output = []
         
         output << "#ifndef DECODER_HEADER"
-        output << "#define DECODER_HEADER"
-        output << ""
+        output << "#define DECODER_HEADER\n"
+
         output << "#include <cstdint>"
         output << "#include <stdexcept>"
-        output << "#include <functional>"
-        output << ""
+        output << "#include <string>\n"
+
         output << "class SPU;"
-        output << "typedef uint32_t Register;"
-        output << ""
-        output << "template<typename... Args>\n" +
-                    "using SPUFunctionPtr = void(*)(SPU&, Args...);\n\n" +
-                    "using DecodedOperation = std::function<void(SPU&)>;\n\n" +
-                    "template<typename... Args>\n" +
-                    "DecodedOperation make_spu_operation(SPUFunctionPtr<Args...> func, Args... args) {\n" +
-                    "\treturn [func, ...args = std::forward<Args>(args)](SPU& spu) mutable {\n" +
-                    "\t\tfunc(spu, std::forward<Args>(args)...);\n" + 
-                    "\t};\n" +
-                    "}\n\n" +
-                    "DecodedOperation decode(SPU& spu, #{REGISTER_DATA_TYPE} insn);\n"
+        output << "typedef uint32_t Register;\n"
+        output << "struct DecodedOperands {\n" +
+                  "\tRegister a;\n" + 
+                  "\tRegister b;\n" +
+                  "\tRegister c;\n" +
+                  "};\n"
+
+        enum_list = String.new()
+        instructions.each do |insn|
+            enum_list << "\t#{insn.upcase},\n"
+        end
+        output << "enum InsnType {\n" +
+                  "#{enum_list}" +
+                  "};\n"
+
+        output << "struct Instruction {\n" +
+                  "\tInsnType insn_type;\n" +
+                  "\tDecodedOperands oprnds;\n" +
+                  "};\n"
+
+        output << "Instruction decode(SPU& spu, #{REGISTER_DATA_TYPE} #{var_name});\n"    
         output << "#endif"
         
-        File.write('result/decoder.h', output.join("\n"))
+        File.write('result/generated/decoder.h', output.join("\n"))
     end
     
     def self.collect_instructions(node, instructions)
@@ -117,39 +123,40 @@ module Decoder
         @output << case_indent + "case 0x#{key.to_s(16)}: {"
         
         if child.is_a?(String) || child.is_a?(Symbol) # Leaf
+            @output << case_indent + INDENT*2 + "insn.insn_type = #{child.upcase};"
+
             arg_values = String.new()
             fields, args = get_instruction_fields_and_args(ir, child).values_at(:fields, :args)
 
+            @output << case_indent + INDENT*2 + "insn.oprnds = {"
             args_num = 0
             args.each do |arg| # past args in correct order
                 next if arg.name == :pc
+                arg_values << ",\n" if args_num > 0
                 field = fields.find { |field| field[:name] == arg.name} # find field with name of this arg 
-                
-                spaces = " " * "return  make_spu_operation(".length # arguments on different lines
-                arg_values << ",\n#{case_indent + INDENT}#{spaces}"
                 case arg.name 
                     when :rd, :rs1, :rs2
                         width = field[:from] - field[:to] + 1
-                        arg_values << "(#{var_name} >> #{field[:to]}) & ((1 << #{width}) - 1)"
+                        arg_values << case_indent + INDENT*3 + "(#{var_name} >> #{field[:to]}) & ((1 << #{width}) - 1)"
                         args_num += 1
                     when :imm
-                        arg_values << "#{assemble_immediate(field.parts, var_name)}"
+                        arg_values << case_indent + INDENT*3 + "#{assemble_immediate(field.parts, var_name)}"
                         args_num += 1
                 end
             end
-            # @output << case_indent + INDENT + "exec_#{child}(spu#{arg_values});"
-            @output << case_indent + INDENT + "return  make_spu_operation(exec_#{child}#{arg_values});"
+            @output << "#{arg_values}"
+            @output << case_indent + INDENT*2 + "};"
+            @output << case_indent + INDENT + "return insn;"
 
         elsif child.is_a?(Hash) # Subtree - recursive call
             generate_switch_statement(child, ir, indent_level + 2, var_name)
         end
         
-        # @output << case_indent + INDENT + "break;"
         @output << case_indent + "}"
     end
         
         @output << case_indent + "default:"
-        @output << case_indent + INDENT + "throw std::runtime_error(\"Unknown insn: 0x\" + std::to_string(insn));"
+        @output << case_indent + INDENT + "throw std::runtime_error(\"Unknown insn: 0x\" + std::to_string(#{var_name}));"
         @output << switch_indent + "}"
     end
 
@@ -201,8 +208,8 @@ end
 
 module Decoder
     # load decode tree and IR
-    tree = YAML.load_file('result/decode_tree.yaml')
-    ir = YAML.load_file('result/IR.yaml', permitted_classes: @allowed_classes, aliases: true)
+    tree = YAML.load_file('result/generated/decode_tree.yaml')
+    ir = YAML.load_file('result/generated/IR.yaml', permitted_classes: @allowed_classes, aliases: true)
     
     generate_decoder_file(tree, ir)
 end
