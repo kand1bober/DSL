@@ -217,6 +217,15 @@ Instruction decode(SPU& spu, Register machine_word) {
                                 };
                             return insn;
                         }
+                        case 0x2000000: {
+                                insn.insn_type = MUL;
+                                insn.oprnds = {
+                                    (machine_word >> 7) & ((1 << 5) - 1),
+                                    (machine_word >> 15) & ((1 << 5) - 1),
+                                    (machine_word >> 20) & ((1 << 5) - 1)
+                                };
+                            return insn;
+                        }
                         case 0x40000000: {
                                 insn.insn_type = SUB;
                                 insn.oprnds = {
@@ -234,62 +243,17 @@ Instruction decode(SPU& spu, Register machine_word) {
                     // Extract bits [31:25] (width: 7)
                     uint32_t field_31_25 = (machine_word) & (0x7f << 25);
                     switch (field_31_25) {
+                        case 0x0: {
+                                insn.insn_type = SLL;
+                                insn.oprnds = {
+                                    (machine_word >> 7) & ((1 << 5) - 1),
+                                    (machine_word >> 15) & ((1 << 5) - 1),
+                                    (machine_word >> 20) & ((1 << 5) - 1)
+                                };
+                            return insn;
+                        }
                         case 0x2000000: {
                                 insn.insn_type = MULH;
-                                insn.oprnds = {
-                                    (machine_word >> 7) & ((1 << 5) - 1),
-                                    (machine_word >> 15) & ((1 << 5) - 1),
-                                    (machine_word >> 20) & ((1 << 5) - 1)
-                                };
-                            return insn;
-                        }
-                        case 0x4000000: {
-                                insn.insn_type = MULHSU;
-                                insn.oprnds = {
-                                    (machine_word >> 7) & ((1 << 5) - 1),
-                                    (machine_word >> 15) & ((1 << 5) - 1),
-                                    (machine_word >> 20) & ((1 << 5) - 1)
-                                };
-                            return insn;
-                        }
-                        case 0x6000000: {
-                                insn.insn_type = MULHU;
-                                insn.oprnds = {
-                                    (machine_word >> 7) & ((1 << 5) - 1),
-                                    (machine_word >> 15) & ((1 << 5) - 1),
-                                    (machine_word >> 20) & ((1 << 5) - 1)
-                                };
-                            return insn;
-                        }
-                        case 0x8000000: {
-                                insn.insn_type = DIV;
-                                insn.oprnds = {
-                                    (machine_word >> 7) & ((1 << 5) - 1),
-                                    (machine_word >> 15) & ((1 << 5) - 1),
-                                    (machine_word >> 20) & ((1 << 5) - 1)
-                                };
-                            return insn;
-                        }
-                        case 0xa000000: {
-                                insn.insn_type = DIVU;
-                                insn.oprnds = {
-                                    (machine_word >> 7) & ((1 << 5) - 1),
-                                    (machine_word >> 15) & ((1 << 5) - 1),
-                                    (machine_word >> 20) & ((1 << 5) - 1)
-                                };
-                            return insn;
-                        }
-                        case 0xc000000: {
-                                insn.insn_type = REM;
-                                insn.oprnds = {
-                                    (machine_word >> 7) & ((1 << 5) - 1),
-                                    (machine_word >> 15) & ((1 << 5) - 1),
-                                    (machine_word >> 20) & ((1 << 5) - 1)
-                                };
-                            return insn;
-                        }
-                        case 0xe000000: {
-                                insn.insn_type = REMU;
                                 insn.oprnds = {
                                     (machine_word >> 7) & ((1 << 5) - 1),
                                     (machine_word >> 15) & ((1 << 5) - 1),
@@ -302,31 +266,82 @@ Instruction decode(SPU& spu, Register machine_word) {
                     }
                 }
                 case 0x2000: {
-                        insn.insn_type = SLT;
-                        insn.oprnds = {
-                            (machine_word >> 7) & ((1 << 5) - 1),
-                            (machine_word >> 15) & ((1 << 5) - 1),
-                            (machine_word >> 20) & ((1 << 5) - 1)
-                        };
-                    return insn;
+                    // Extract bits [31:25] (width: 7)
+                    uint32_t field_31_25 = (machine_word) & (0x7f << 25);
+                    switch (field_31_25) {
+                        case 0x0: {
+                                insn.insn_type = SLT;
+                                insn.oprnds = {
+                                    (machine_word >> 7) & ((1 << 5) - 1),
+                                    (machine_word >> 15) & ((1 << 5) - 1),
+                                    (machine_word >> 20) & ((1 << 5) - 1)
+                                };
+                            return insn;
+                        }
+                        case 0x2000000: {
+                                insn.insn_type = MULHSU;
+                                insn.oprnds = {
+                                    (machine_word >> 7) & ((1 << 5) - 1),
+                                    (machine_word >> 15) & ((1 << 5) - 1),
+                                    (machine_word >> 20) & ((1 << 5) - 1)
+                                };
+                            return insn;
+                        }
+                        default:
+                            throw std::runtime_error("Unknown insn: 0x" + std::to_string(machine_word));
+                    }
                 }
                 case 0x3000: {
-                        insn.insn_type = SLTU;
-                        insn.oprnds = {
-                            (machine_word >> 7) & ((1 << 5) - 1),
-                            (machine_word >> 15) & ((1 << 5) - 1),
-                            (machine_word >> 20) & ((1 << 5) - 1)
-                        };
-                    return insn;
+                    // Extract bits [31:25] (width: 7)
+                    uint32_t field_31_25 = (machine_word) & (0x7f << 25);
+                    switch (field_31_25) {
+                        case 0x0: {
+                                insn.insn_type = SLTU;
+                                insn.oprnds = {
+                                    (machine_word >> 7) & ((1 << 5) - 1),
+                                    (machine_word >> 15) & ((1 << 5) - 1),
+                                    (machine_word >> 20) & ((1 << 5) - 1)
+                                };
+                            return insn;
+                        }
+                        case 0x2000000: {
+                                insn.insn_type = MULHU;
+                                insn.oprnds = {
+                                    (machine_word >> 7) & ((1 << 5) - 1),
+                                    (machine_word >> 15) & ((1 << 5) - 1),
+                                    (machine_word >> 20) & ((1 << 5) - 1)
+                                };
+                            return insn;
+                        }
+                        default:
+                            throw std::runtime_error("Unknown insn: 0x" + std::to_string(machine_word));
+                    }
                 }
                 case 0x4000: {
-                        insn.insn_type = XOR;
-                        insn.oprnds = {
-                            (machine_word >> 7) & ((1 << 5) - 1),
-                            (machine_word >> 15) & ((1 << 5) - 1),
-                            (machine_word >> 20) & ((1 << 5) - 1)
-                        };
-                    return insn;
+                    // Extract bits [31:25] (width: 7)
+                    uint32_t field_31_25 = (machine_word) & (0x7f << 25);
+                    switch (field_31_25) {
+                        case 0x0: {
+                                insn.insn_type = XOR;
+                                insn.oprnds = {
+                                    (machine_word >> 7) & ((1 << 5) - 1),
+                                    (machine_word >> 15) & ((1 << 5) - 1),
+                                    (machine_word >> 20) & ((1 << 5) - 1)
+                                };
+                            return insn;
+                        }
+                        case 0x2000000: {
+                                insn.insn_type = DIV;
+                                insn.oprnds = {
+                                    (machine_word >> 7) & ((1 << 5) - 1),
+                                    (machine_word >> 15) & ((1 << 5) - 1),
+                                    (machine_word >> 20) & ((1 << 5) - 1)
+                                };
+                            return insn;
+                        }
+                        default:
+                            throw std::runtime_error("Unknown insn: 0x" + std::to_string(machine_word));
+                    }
                 }
                 case 0x5000: {
                     // Extract bits [31:25] (width: 7)
@@ -334,6 +349,15 @@ Instruction decode(SPU& spu, Register machine_word) {
                     switch (field_31_25) {
                         case 0x0: {
                                 insn.insn_type = SRL;
+                                insn.oprnds = {
+                                    (machine_word >> 7) & ((1 << 5) - 1),
+                                    (machine_word >> 15) & ((1 << 5) - 1),
+                                    (machine_word >> 20) & ((1 << 5) - 1)
+                                };
+                            return insn;
+                        }
+                        case 0x2000000: {
+                                insn.insn_type = DIVU;
                                 insn.oprnds = {
                                     (machine_word >> 7) & ((1 << 5) - 1),
                                     (machine_word >> 15) & ((1 << 5) - 1),
@@ -355,22 +379,56 @@ Instruction decode(SPU& spu, Register machine_word) {
                     }
                 }
                 case 0x6000: {
-                        insn.insn_type = OR;
-                        insn.oprnds = {
-                            (machine_word >> 7) & ((1 << 5) - 1),
-                            (machine_word >> 15) & ((1 << 5) - 1),
-                            (machine_word >> 20) & ((1 << 5) - 1)
-                        };
-                    return insn;
+                    // Extract bits [31:25] (width: 7)
+                    uint32_t field_31_25 = (machine_word) & (0x7f << 25);
+                    switch (field_31_25) {
+                        case 0x0: {
+                                insn.insn_type = OR;
+                                insn.oprnds = {
+                                    (machine_word >> 7) & ((1 << 5) - 1),
+                                    (machine_word >> 15) & ((1 << 5) - 1),
+                                    (machine_word >> 20) & ((1 << 5) - 1)
+                                };
+                            return insn;
+                        }
+                        case 0x2000000: {
+                                insn.insn_type = REM;
+                                insn.oprnds = {
+                                    (machine_word >> 7) & ((1 << 5) - 1),
+                                    (machine_word >> 15) & ((1 << 5) - 1),
+                                    (machine_word >> 20) & ((1 << 5) - 1)
+                                };
+                            return insn;
+                        }
+                        default:
+                            throw std::runtime_error("Unknown insn: 0x" + std::to_string(machine_word));
+                    }
                 }
                 case 0x7000: {
-                        insn.insn_type = AND;
-                        insn.oprnds = {
-                            (machine_word >> 7) & ((1 << 5) - 1),
-                            (machine_word >> 15) & ((1 << 5) - 1),
-                            (machine_word >> 20) & ((1 << 5) - 1)
-                        };
-                    return insn;
+                    // Extract bits [31:25] (width: 7)
+                    uint32_t field_31_25 = (machine_word) & (0x7f << 25);
+                    switch (field_31_25) {
+                        case 0x0: {
+                                insn.insn_type = AND;
+                                insn.oprnds = {
+                                    (machine_word >> 7) & ((1 << 5) - 1),
+                                    (machine_word >> 15) & ((1 << 5) - 1),
+                                    (machine_word >> 20) & ((1 << 5) - 1)
+                                };
+                            return insn;
+                        }
+                        case 0x2000000: {
+                                insn.insn_type = REMU;
+                                insn.oprnds = {
+                                    (machine_word >> 7) & ((1 << 5) - 1),
+                                    (machine_word >> 15) & ((1 << 5) - 1),
+                                    (machine_word >> 20) & ((1 << 5) - 1)
+                                };
+                            return insn;
+                        }
+                        default:
+                            throw std::runtime_error("Unknown insn: 0x" + std::to_string(machine_word));
+                    }
                 }
                 default:
                     throw std::runtime_error("Unknown insn: 0x" + std::to_string(machine_word));

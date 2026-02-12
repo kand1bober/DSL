@@ -18,14 +18,15 @@ module SimInfra
             or:   [6, 0],
             and:  [7, 0],
 
-            mul:    [1, 0], 
+            mul:    [0, 1], 
             mulh:   [1, 1],
-            mulhsu: [1, 2],
-            mulhu:  [1, 3],
-            div:    [1, 4],
-            divu:   [1, 5],
-            rem:    [1, 6],
-            remu:   [1, 7]
+            mulhsu: [2, 1],
+            mulhu:  [3, 1],
+
+            div:    [4, 1],
+            divu:   [5, 1],
+            rem:    [6, 1],
+            remu:   [7, 1]
         }[name]
 
         funct3, funct7 = pair[0], pair[1]
@@ -226,5 +227,4 @@ module SimInfra
         }[name]
         format_i(rs1, funct3, rd, 0b1100111)
     end
-
 end
