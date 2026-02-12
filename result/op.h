@@ -64,6 +64,14 @@ Register op_sra(SPU& spu, Register a, Register b);
 Register sign_extend(SPU& spu, Register a, Register b);
 Register zero_extend(SPU& spu, Register a, Register b);
 
+Register readMem8(SPU& spu, uint32_t addr);
+Register readMem16(SPU& spu, uint32_t addr);
+Register readMem32(SPU& spu, uint32_t addr);
+
+Register writeMem8(SPU& spu, uint32_t addr, Register val);
+Register writeMem16(SPU& spu, uint32_t addr, Register val);
+Register writeMem32(SPU& spu, uint32_t addr, Register val);
+
 // Begin of auto-generated prototypes
 	// Execution functions declarations
 	void exec_add(SPU& spu, Register rd, Register rs1, Register rs2);
@@ -99,6 +107,9 @@ Register zero_extend(SPU& spu, Register a, Register b);
 	void exec_lw(SPU& spu, Register rd, Register rs1, Register imm);
 	void exec_lbu(SPU& spu, Register rd, Register rs1, Register imm);
 	void exec_lhu(SPU& spu, Register rd, Register rs1, Register imm);
+	void exec_sb(SPU& spu, Register rs1, Register rs2, Register imm);
+	void exec_sh(SPU& spu, Register rs1, Register rs2, Register imm);
+	void exec_sw(SPU& spu, Register rs1, Register rs2, Register imm);
 	void exec_beq(SPU& spu, Register rs1, Register rs2, Register imm);
 	void exec_bne(SPU& spu, Register rs1, Register rs2, Register imm);
 	void exec_blt(SPU& spu, Register rs1, Register rs2, Register imm);

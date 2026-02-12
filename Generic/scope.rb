@@ -79,7 +79,7 @@ module SimInfra
             readMem = 'readMem' + num.to_s
             writeMem = 'writeMem' + num.to_s
             define_method(readMem) { |addr| un_op(addr, readMem) }
-            define_method(writeMem) { |addr| un_op(addr, readMem) }
+            define_method(writeMem) { |addr, val| bin_op(addr, val, writeMem) }
         end
         
         # binary 
@@ -141,17 +141,11 @@ module SimInfra
         def slli(a, b) op_sll(a, bit_extract(b, 4, 0)) end
         def srli(a, b) op_srl(a, bit_extract(b, 4, 0)) end
         def srai(a, b) op_sra(a, bit_extract(b, 4, 0)) end
-            #--- I_MEM ---
-        def lb(a, imm)  se(mem8(add(a,  se(imm, 12))), 8)  end 
-        def lh(a, imm)  se(mem16(add(a, se(imm, 12))), 16) end
-        def lw(a, imm)     mem32(add(a, se(imm, 12)))      end
-        def lbu(a, imm) ze(mem8(add(a,  se(imm, 12))), 8)  end
-        def lhu(a, imm) ze(mem16(add(a, se(imm, 12))), 16) end
 
-        #----- S -----
-        def sb(a, imm, b) (mem8(add(a, se(imm, 12)))).[]= ui8(bit_extract(b, 7, 0)) end
-        def sh(a, imm, b) (mem16(add(a, se(imm, 12)))).[]= ui16(bit_extract(b, 16, 0)) end
-        def sw(a, imm, b) (mem32(add(a, se(imm, 12)))).[]= b end
+        # #----- S -----
+        # def sb(a, imm, b) (mem8(add(a, se(imm, 12)))).[]= ui8(bit_extract(b, 7, 0)) end
+        # def sh(a, imm, b) (mem16(add(a, se(imm, 12)))).[]= ui16(bit_extract(b, 16, 0)) end
+        # def sw(a, imm, b) (mem32(add(a, se(imm, 12)))).[]= b end
 
         #----- U -----
         def lui(imm, pc) op_sll(imm, 12) end

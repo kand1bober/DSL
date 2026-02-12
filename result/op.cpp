@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <cassert>
 #include "op.h"
 
 Register bit_extract(SPU& spu, Register src, Register from, Register to)
@@ -42,10 +43,6 @@ Register rem_unsign(SPU& spu, Register a, Register b) {
     return a % b;
 }
 
-void readMem8(SPU, uint16, uint32_t*) {}
-void readMem16(SPU, uint16, uint32_t*) {}
-void readMem32(SPU, uint16, uint32_t*) {}
-
 // operation '>>>' in code tree is sra(shift right ariphmetic)
 Register op_sra(SPU& spu, Register a, Register b) {
     return (int32_t)a >> b;
@@ -64,3 +61,37 @@ Register sign_extend(SPU& spu, Register a, Register b) {
 Register zero_extend(SPU& spu, Register a, Register b) {
     return a;
 }   
+
+Register readMem8(SPU& spu, uint32_t addr) {
+    assert(addr);
+    return *(uint8_t*)((char*)(&spu.mem.data[0]) + addr);
+}
+
+Register readMem16(SPU& spu, uint32_t addr) {
+    assert(addr);
+    return *(uint16_t*)((char*)(&spu.mem.data[0]) + addr);
+}
+
+Register readMem32(SPU& spu, uint32_t addr) {
+    assert(addr);
+    return *(uint32_t*)((char*)(&spu.mem.data[0]) + addr);
+}
+
+
+Register writeMem8(SPU& spu, uint32_t addr, Register val) {
+    assert(addr);
+    *(uint8_t*)((char*)(&spu.mem.data[0]) + addr) = (uint8_t)val;
+    return 0;
+}
+
+Register writeMem16(SPU& spu, uint32_t addr, Register val) {
+    assert(addr);
+    *(uint16_t*)((char*)(&spu.mem.data[0]) + addr) = (uint16_t)val;
+    return 0;
+}
+
+Register writeMem32(SPU& spu, uint32_t addr, Register val) {
+    assert(addr);
+    *(uint32_t*)((char*)(&spu.mem.data[0]) + addr) = val;
+    return 0;
+}

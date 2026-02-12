@@ -65,28 +65,32 @@ module RV32I
                 addr = var(:addr, :i32) #create variable
                 addr[]= add(rs1, se(imm, 12))
                 instance_exec(addr, &read_mem) 
-                # rd[]= readMem8(addr)
             }                   
         }
     end
-    # readMem<num> simulation side / implementation defined
+    # readMem<num> is simulation side / implementation defined
     make_i_mem(:lb)  { |addr| rd[]= se(readMem8(addr),  8) }
-    make_i_mem(:lh)  { |addr| rd[]= se(readMem16(addr), 8) }
+    make_i_mem(:lh)  { |addr| rd[]= se(readMem16(addr), 16) }
     make_i_mem(:lw)  { |addr| rd[]= readMem32(addr) }
     make_i_mem(:lbu) { |addr| rd[]= ze(readMem8(addr),  8) }
-    make_i_mem(:lhu) { |addr| rd[]= ze(readMem16(addr), 8) }
+    make_i_mem(:lhu) { |addr| rd[]= ze(readMem16(addr), 16) }
 
     #---------- S ----------
-    def self.make_s(name)
+    def self.make_s(name, &write_mem)
         Instruction(name, XReg(:rs1), XReg(:rs2), Imm()) {
             encoding *format_s(name.to_s.to_sym, rs1, rs2)
             asm { "#{name} #{rs2}, #{imm}(#{rs1})" }    
-            code { send(name, rs1, imm, rs2) }
+            code {
+                # send(name, rs1, imm, rs2) 
+                addr = var(:addr, :i32) #create variable
+                addr[]= add(rs1, se(imm, 12))
+                instance_exec(addr, rs2, &write_mem) 
+            }
         }
     end
-    S_TYPE_INSNS.each do |name|
-        make_s(name)
-    end
+    make_s(:sb) { |addr, rs2|  writeMem8(addr, rs2) }
+    make_s(:sh) { |addr, rs2|  writeMem16(addr, rs2) }
+    make_s(:sw) { |addr, rs2|  writeMem32(addr, rs2) }
 
     #---------- B ----------
     def self.make_b(name, cond)
@@ -109,16 +113,17 @@ module RV32I
     end
 
     #---------- U ----------
-    def self.make_u(name)
+    def self.make_u(name, &code_block)
         Instruction(name, XReg(:rd), Imm(), PC()) {
             encoding *format_u(name.to_s.to_sym, rd)
             asm { "#{name} #{rd}, #{imm}" }
-            code { rd[]= imm.send(name, pc) }                       
+            code { 
+                instance_exec(rd, imm, pc, &code_block)
+            }                       
         }
     end
-    U_TYPE_INSNS.each do |name|
-        make_u(name)
-    end
+    make_u(:lui)   { rd[]= op_sll(imm, 12) }
+    make_u(:auipc) { rd[]= add(pc, op_sll(imm, 12)) }
 
     #---------- J ----------
     def self.make_j(name)
