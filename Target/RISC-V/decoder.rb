@@ -66,9 +66,9 @@ module Decoder
         output << "class SPU;"
         output << "typedef uint32_t Register;\n"
         output << "struct DecodedOperands {\n" +
-                  "\tRegister a;\n" + 
-                  "\tRegister b;\n" +
-                  "\tRegister c;\n" +
+                  "\tRegister arg1;\n" + 
+                  "\tRegister arg2;\n" +
+                  "\tRegister arg3;\n" +
                   "};\n"
 
         enum_list = String.new()

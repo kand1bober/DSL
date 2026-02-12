@@ -50,4 +50,6 @@
 	void exec_auipc(SPU& spu, Register rd, Register imm);
 	void exec_jal(SPU& spu, Register rd, Register imm);
 
+	void execute(SPU& spu, Instruction& insn);
+
 #endif

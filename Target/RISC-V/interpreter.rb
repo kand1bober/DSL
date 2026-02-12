@@ -190,12 +190,45 @@ module InterpreterGenerator
         end
         
         output << ""
+        output << "\tvoid execute(SPU& spu, Instruction& insn);"
+        output << ""
         output << "#endif"
 
         File.write(filename, output.join("\n"))
     end
 
     # =============== MAKE EXEC FUNC ===============
+    def self.get_exec_args(insn)
+        str = String.new()
+
+        count = 1
+        insn[:args].each do |arg| 
+            next if arg.name == :pc
+                str << ", insn.oprnds.arg#{count}"
+            count += 1
+        end
+
+        return str
+    end
+
+    def self.generate_main_execute(ir_list, f)
+        f.puts "void execute(SPU& spu, Instruction& insn) {\n" +
+               "\tswitch (insn.insn_type) {"
+
+        # genarate cases for all instructions
+        ir_list.each do |insn|
+            f.puts "\t\tcase #{insn[:name].to_s.upcase}: {" 
+            f.puts "\t\t\texec_#{insn[:name].to_s.downcase}(spu#{get_exec_args(insn)});"
+            f.puts "\t\t\tbreak;"
+            f.puts "\t\t}"
+        end
+
+        f.puts "\t\tthrow std::runtime_error(\"Unknown enum: \" + std::to_string(insn.insn_type));"
+        f.puts "\t}"
+        f.puts "}"
+        f.puts ""
+    end
+
     def self.generate_exec_function(insn, f)
         name = insn[:name].to_s
         f.puts("void exec_#{name}(SPU &spu#{get_formal_params(insn)}) {")
@@ -250,26 +283,18 @@ module InterpreterGenerator
 
     # make cpp
     File.open("result/generated/execute.cpp", "w") do |f|
+        f.puts("#include \"op.h\"\n\n")
         f.puts("#include \"execute.h\"\n")
         f.puts("#include \"decode.h\"\n\n")
-            # for each insn from IR tree
-            ir_list.each do |insn|
-                generate_exec_function(insn, f)
-            end
+        
+        # function with main switch        
+        generate_main_execute(ir_list, f)
+
+        # for each insn from IR tree
+        ir_list.each do |insn|
+            generate_exec_function(insn, f)
+        end
     end
 
     puts("C++ interpreter generated in 'result/generated/interpret.cpp'")
 end
-
-# void execute(SPU& spu, Instruction& insn) {
-#     switch (insn.insn_type) {
-#         case ADD: {
-#             exec_add(spu, insn.oprnds);
-#             break;
-#         }
-
-#         // ...
-
-#         default: std::cout << "error in switch in execute" << std::endl;
-#     }
-# }

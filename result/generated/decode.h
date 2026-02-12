@@ -9,9 +9,9 @@ class SPU;
 typedef uint32_t Register;
 
 struct DecodedOperands {
-    Register a;
-	Register b;
-	Register c;
+	Register arg1;
+	Register arg2;
+	Register arg3;
 };
 
 enum InsnType {

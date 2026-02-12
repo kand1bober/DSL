@@ -1,6 +1,193 @@
+#include "op.h"
+
 #include "execute.h"
 #include "decode.h"
 
+void execute(SPU& spu, Instruction& insn) {
+	switch (insn.insn_type) {
+		case ADD: {
+			exec_add(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case SUB: {
+			exec_sub(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case XOR: {
+			exec_xor(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case OR: {
+			exec_or(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case AND: {
+			exec_and(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case SLT: {
+			exec_slt(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case SLTU: {
+			exec_sltu(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case SLL: {
+			exec_sll(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case SRL: {
+			exec_srl(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case SRA: {
+			exec_sra(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case MUL: {
+			exec_mul(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case MULH: {
+			exec_mulh(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case MULHSU: {
+			exec_mulhsu(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case MULHU: {
+			exec_mulhu(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case DIV: {
+			exec_div(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case DIVU: {
+			exec_divu(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case REM: {
+			exec_rem(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case REMU: {
+			exec_remu(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case ADDI: {
+			exec_addi(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case XORI: {
+			exec_xori(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case ORI: {
+			exec_ori(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case ANDI: {
+			exec_andi(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case SLTI: {
+			exec_slti(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case SLTIU: {
+			exec_sltiu(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case SLLI: {
+			exec_slli(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case SRLI: {
+			exec_srli(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case SRAI: {
+			exec_srai(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case JALR: {
+			exec_jalr(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case LB: {
+			exec_lb(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case LH: {
+			exec_lh(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case LW: {
+			exec_lw(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case LBU: {
+			exec_lbu(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case LHU: {
+			exec_lhu(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case SB: {
+			exec_sb(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case SH: {
+			exec_sh(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case SW: {
+			exec_sw(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case BEQ: {
+			exec_beq(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case BNE: {
+			exec_bne(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case BLT: {
+			exec_blt(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case BGE: {
+			exec_bge(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case BLTU: {
+			exec_bltu(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case BGEU: {
+			exec_bgeu(spu, insn.oprnds.arg1, insn.oprnds.arg2, insn.oprnds.arg3);
+			break;
+		}
+		case LUI: {
+			exec_lui(spu, insn.oprnds.arg1, insn.oprnds.arg2);
+			break;
+		}
+		case AUIPC: {
+			exec_auipc(spu, insn.oprnds.arg1, insn.oprnds.arg2);
+			break;
+		}
+		case JAL: {
+			exec_jal(spu, insn.oprnds.arg1, insn.oprnds.arg2);
+			break;
+		}
+		throw std::runtime_error("Unknown enum: " + std::to_string(insn.insn_type));
+	}
+}
 
 void exec_add(SPU &spu, Register par_rd, Register par_rs1, Register par_rs2) {
 	std::cout << "add" << std::endl;
