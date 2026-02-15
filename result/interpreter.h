@@ -1,6 +1,6 @@
 #include "spu.h"
-#include "decode.h"
-#include "execute.h"
+#include "generated/decode.h"
+#include "generated/execute.h"
 
 #ifndef INTERPRETER_HEADER
 #define INTERPRETER_HEADER

@@ -1,7 +1,6 @@
-#include "op.h"
-
+#include "../op.h"
+#include "../spu.h"
 #include "execute.h"
-#include "decode.h"
 
 void execute(SPU& spu, Instruction& insn) {
 	switch (insn.insn_type) {

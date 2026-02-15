@@ -4,7 +4,7 @@
 
 Register bit_extract(SPU& spu, Register src, Register from, Register to)
 {
-    Register mask = (((Register)1 << (from - to + 1)) - 1) << to;
+    Register mask = (((int64_t)1 << (from - to + 1)) - 1) << to;
         
     return (src & mask) >> to;
 }
@@ -63,35 +63,35 @@ Register zero_extend(SPU& spu, Register a, Register b) {
 }   
 
 Register readMem8(SPU& spu, uint32_t addr) {
-    assert(addr);
+    assert(addr >= 0);
     return *(uint8_t*)((char*)(&spu.mem.data[0]) + addr);
 }
 
 Register readMem16(SPU& spu, uint32_t addr) {
-    assert(addr);
+    assert(addr >= 0);
     return *(uint16_t*)((char*)(&spu.mem.data[0]) + addr);
 }
 
 Register readMem32(SPU& spu, uint32_t addr) {
-    assert(addr);
+    assert(addr >= 0);
     return *(uint32_t*)((char*)(&spu.mem.data[0]) + addr);
 }
 
 
 Register writeMem8(SPU& spu, uint32_t addr, Register val) {
-    assert(addr);
+    assert(addr >= 0);
     *(uint8_t*)((char*)(&spu.mem.data[0]) + addr) = (uint8_t)val;
     return 0;
 }
 
 Register writeMem16(SPU& spu, uint32_t addr, Register val) {
-    assert(addr);
+    assert(addr >= 0);
     *(uint16_t*)((char*)(&spu.mem.data[0]) + addr) = (uint16_t)val;
     return 0;
 }
 
 Register writeMem32(SPU& spu, uint32_t addr, Register val) {
-    assert(addr);
+    assert(addr >= 0);
     *(uint32_t*)((char*)(&spu.mem.data[0]) + addr) = val;
     return 0;
 }

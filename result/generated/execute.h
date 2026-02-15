@@ -1,5 +1,3 @@
-#include "spu.h"
-
 #ifndef EXECUTE_HEADER
 #define EXECUTE_HEADER
 

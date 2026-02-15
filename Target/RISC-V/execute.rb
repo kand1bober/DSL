@@ -172,8 +172,6 @@ module InterpreterGenerator
     # =============== MAKE HEADER =============== 
     def self.make_header(ir_list, filename)
         output = []
-        output << "#include \"spu.h\""
-        output << ""
         output << "#ifndef EXECUTE_HEADER"
         output << "#define EXECUTE_HEADER"
         output << ""
@@ -283,9 +281,9 @@ module InterpreterGenerator
 
     # make cpp
     File.open("result/generated/execute.cpp", "w") do |f|
-        f.puts("#include \"op.h\"\n\n")
-        f.puts("#include \"execute.h\"\n")
-        f.puts("#include \"decode.h\"\n\n")
+        f.puts("#include \"../op.h\"")
+        f.puts("#include \"../spu.h\"")
+        f.puts("#include \"execute.h\"\n\n")
         
         # function with main switch        
         generate_main_execute(ir_list, f)

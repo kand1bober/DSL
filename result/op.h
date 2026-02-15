@@ -2,8 +2,8 @@
 #include <stdexcept>
 
 #include "spu.h"
-#include "decode.h"
-#include "execute.h"
+#include "generated/decode.h"
+#include "generated/execute.h"
 
 #ifndef OPERATIONS_HEADER
 #define OPERATIONS_HEADER

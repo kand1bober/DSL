@@ -1,6 +1,7 @@
 #include <iostream>
 #include <iomanip>
 #include "op.h"
+#include "interpreter.h"
 
 int main(int argc, char* argv[])
 {
@@ -9,7 +10,6 @@ int main(int argc, char* argv[])
     // spu.cpu.regs[5] = 1;
     // spu.cpu.regs[6] = 2;
     // std::vector<Register> program;
-
 
     std::vector<Register> program = {
        // Просто сложение двух чисел
