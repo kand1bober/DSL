@@ -237,7 +237,7 @@ void test_itype_alu_instructions() {
     
     // SRAI
     {
-        Register insn = make_insn(0x13, 0x5, 0x6, 0, 0x5, 0x40, 0);
+        Register insn = make_insn(0x13, 0x5, 0x6, 0, 0x5, 0x20, 0);
         insn |= (0x1F & 0x1F) << 20;
         bool ok = safe_decode(spu, insn, decoded, error);
         bool passed = ok && (decoded.insn_type == SRAI);
@@ -291,7 +291,7 @@ void test_rtype_instructions() {
     
     // SUB
     {
-        Register insn = make_insn(0x33, 0x5, 0x6, 0x7, 0x0, 0x40);
+        Register insn = make_insn(0x33, 0x5, 0x6, 0x7, 0x0, 0x20);
         bool ok = safe_decode(spu, insn, decoded, error);
         bool passed = ok && (decoded.insn_type == SUB);
         print_test_result("SUB", passed, error, insn);
@@ -339,7 +339,7 @@ void test_rtype_instructions() {
     
     // SRA
     {
-        Register insn = make_insn(0x33, 0x5, 0x6, 0x7, 0x5, 0x40);
+        Register insn = make_insn(0x33, 0x5, 0x6, 0x7, 0x5, 0x20);
         bool ok = safe_decode(spu, insn, decoded, error);
         bool passed = ok && (decoded.insn_type == SRA);
         print_test_result("SRA", passed, error, insn);
@@ -385,7 +385,7 @@ void test_m_extension_instructions() {
     
     // MULHSU
     {
-        Register insn = make_insn(0x33, 0x5, 0x6, 0x7, 0x1, 0x2);
+        Register insn = make_insn(0x33, 0x5, 0x6, 0x7, 0x2, 0x1);
         bool ok = safe_decode(spu, insn, decoded, error);
         bool passed = ok && (decoded.insn_type == MULHSU);
         print_test_result("MULHSU", passed, error, insn);
@@ -393,7 +393,7 @@ void test_m_extension_instructions() {
     
     // MULHU
     {
-        Register insn = make_insn(0x33, 0x5, 0x6, 0x7, 0x1, 0x3);
+        Register insn = make_insn(0x33, 0x5, 0x6, 0x7, 0x3, 0x1);
         bool ok = safe_decode(spu, insn, decoded, error);
         bool passed = ok && (decoded.insn_type == MULHU);
         print_test_result("MULHU", passed, error, insn);
