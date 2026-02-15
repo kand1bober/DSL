@@ -10,7 +10,7 @@ typedef uint32_t Register;
 typedef int32_t  SignedRegister;
 
 struct CPU { 
-    std::array<Register, 32> regs; 
+    std::array<Register, 32> regs;
     Register pc;
 };
 
@@ -23,7 +23,10 @@ public:
     CPU cpu;
     Ram mem;
 
-    void run(const std::vector<Register>& program);
+    std::vector<uint8_t> program;
+
+    void load_elf(const std::string& filename);
+    void run();
 };
 
 #endif

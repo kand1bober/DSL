@@ -281,8 +281,8 @@ module InterpreterGenerator
 
     # make cpp
     File.open("result/generated/execute.cpp", "w") do |f|
-        f.puts("#include \"../op.h\"")
-        f.puts("#include \"../spu.h\"")
+        f.puts("#include \"../static/op.h\"")
+        f.puts("#include \"../static/spu.h\"")
         f.puts("#include \"execute.h\"\n\n")
         
         # function with main switch        

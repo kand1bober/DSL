@@ -1,5 +1,5 @@
-#include "../op.h"
-#include "../spu.h"
+#include "../static/op.h"
+#include "../static/spu.h"
 #include "execute.h"
 
 void execute(SPU& spu, Instruction& insn) {
