@@ -5,4 +5,3 @@ riscv64-unknown-elf-gcc -nostdlib \
     -mabi=ilp32 \
     -T executables/link.ld \
     $1.s -o $1.elf
-    

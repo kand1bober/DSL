@@ -8,7 +8,7 @@
 #ifndef OPERATIONS_HEADER
 #define OPERATIONS_HEADER
 
-Register bit_extract(SPU& spu, Register src, Register from, Register to);
+Register bit_extract(SPU& spu, int64_t src, Register from, Register to);
 
 bool less_signed(SPU& spu, Register a, Register b);
 bool more_equal_signed(SPU& spu, Register a, Register b);

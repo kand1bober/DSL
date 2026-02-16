@@ -27,6 +27,11 @@ void SPU::run() {
         if (!(insn.insn_type >= BEQ && insn.insn_type <= JAL)) {
             cpu.pc += 4;
         }        
+
+        // Проверяем результаты
+        std::cout << "mem[0] = " << readMem32(*this, 0) << " (ожидается 3)" << std::endl;
+        std::cout << "mem[4] = " << readMem32(*this, 4) << " (ожидается 7)" << std::endl; 
+        std::cout << "mem[8] = " << readMem32(*this, 8) << " (ожидается 14)" << std::endl;
     }
 }
 

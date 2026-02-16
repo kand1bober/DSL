@@ -47,7 +47,7 @@ module SimInfra
             @info.code = scope = Scope.new(nil) # root scope
             # create tmp vars, if they were mentioned by user
             @info.args.each do |arg|
-                scope.var(arg.name, :i32) # example :rd --> scope.rd, return obj. Var 
+                scope.var(arg.name, :i32) # example :rd --> scope.rd, return obj. Var on this scope 
                 if [:rs1, :rs2].include?(arg.name)
                     scope.stmt(:getreg, [arg.name, arg])
                 elsif [:imm].include?(arg.name)

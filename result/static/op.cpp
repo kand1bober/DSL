@@ -3,9 +3,9 @@
 #include "op.h"
 #include "spu.h"
 
-Register bit_extract(SPU& spu, Register src, Register from, Register to)
+Register bit_extract(SPU& spu, int64_t src, Register from, Register to)
 {
-    Register mask = (((int64_t)1 << (from - to + 1)) - 1) << to;
+    int64_t mask = (((int64_t)1 << (from - to + 1)) - 1) << to;
         
     return (src & mask) >> to;
 }
@@ -29,23 +29,43 @@ bool more_equal_unsign(SPU& spu, Register a, Register b) {
 
 //----- DIV -----
 Register div_signed(SPU& spu, Register a, Register b) {
-    assert(b);
+    if (b == 0) {
+        return -1;
+    }
+
+    // Check overflow: -2^31 / -1
+    if (a == 0x80000000 && b == 0xFFFFFFFF) {
+        return 0x80000000;  // -2^31
+    }
+
     return (int32_t)a / (int32_t)b;
 }
 
 Register div_unsign(SPU& spu, Register a, Register b) {
-    assert(b);
-    return a / b;    
+    if (b == 0) {
+        return ((int64_t)1 << (sizeof(Register) * 8)) - 1; // 0xFFF...
+    } 
+    else {
+        return a / b;    
+    }
 }
 
 Register rem_signed(SPU& spu, Register a, Register b) {
-    assert(b);
-    return (int32_t)a % (int32_t)b;
+    if (b == 0) {
+        return a;
+    }
+    else {
+        return (int32_t)a % (int32_t)b;
+    }
 }
 
 Register rem_unsign(SPU& spu, Register a, Register b) {
-    assert(b);
-    return a % b;
+    if (b == 0) {
+        return a;
+    }
+    else {
+        return a % b;
+    } 
 }
 
 // operation '>>>' in code tree is sra(shift right ariphmetic)

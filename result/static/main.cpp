@@ -15,10 +15,10 @@ int main(int argc, char* argv[])
 
     spu.run();
 
-    // Проверяем результаты
-    std::cout << "mem[0] = " << readMem32(spu, 0) << " (ожидается 3)" << std::endl;
-    std::cout << "mem[4] = " << *((uint32_t*)&spu.mem.data[4]) << " (ожидается 7)" << std::endl; 
-    std::cout << "mem[8] = " << *((uint32_t*)&spu.mem.data[8]) << " (ожидается 14)" << std::endl;
+    // // Проверяем результаты
+    // std::cout << "mem[0] = " << readMem32(spu, 0) << " (ожидается 3)" << std::endl;
+    // std::cout << "mem[4] = " << *((uint32_t*)&spu.mem.data[4]) << " (ожидается 7)" << std::endl; 
+    // std::cout << "mem[8] = " << *((uint32_t*)&spu.mem.data[8]) << " (ожидается 14)" << std::endl;
 
     // for (int i = 0; i < 32;) {
     //     for (int j = 0; j < 4; j++, i++) {

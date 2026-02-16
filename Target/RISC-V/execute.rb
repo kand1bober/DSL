@@ -68,11 +68,25 @@ module InterpreterGenerator
         unary: { # --- here are expressions, not statement
             ui8:  'uint8_t', 
             ui16: 'uint16_t', 
-            ui32: REGISTER_DATA_TYPE, 
+            ui32:  REGISTER_DATA_TYPE,
+            ui64: 'uint64_t', 
             i8:   'int8_t', 
             i16:  'int16_t',
             i32:  'int32_t',
+            i64:  'int64_t', 
         },
+    }
+
+    DATA_TYPES = {
+        ui8:  'uint8_t',
+        ui16: 'uint16_t',
+        ui32:  REGISTER_DATA_TYPE,
+        ui64: 'uint64_t',
+
+        i8:  'int8_t',
+        i16: 'int16_t',
+        i32: 'int32_t',
+        i64: 'int64_t',
     }
     
     # ================= OPERATIONS WITH OPERANDS =================
@@ -126,7 +140,7 @@ module InterpreterGenerator
         end
         return params
     end
-
+    
     # ================= INTERPRETATION OF STATEMENTS =================
     # op_type - always sym, op_val - string(watch BASE_OPS)
     def self.interpret_result(code, op_type, op_val)
@@ -244,7 +258,7 @@ module InterpreterGenerator
                     when :let
                         f.puts("\t#{get_operand_val(code.oprnds[0])} = #{get_operand_val(code.oprnds[1])};")
                     when :new_var
-                        f.puts("\t#{REGISTER_DATA_TYPE} #{code.oprnds[0].name};")
+                        f.puts("\t#{DATA_TYPES[code.oprnds[0].type]} #{code.oprnds[0].name};")
                     when :new_const 
                         # skip
                     when :setreg

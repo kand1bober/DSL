@@ -63,4 +63,6 @@ build-iPhoneSimulator/
 decoder.cpp
 interpret.cpp
 test.rb
-TODO
+exec_test
+decode_test
+sim

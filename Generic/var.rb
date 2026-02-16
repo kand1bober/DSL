@@ -21,8 +21,14 @@ module SimInfra
         end
 
         def type()
+            if name[0] == 'i' || name[0,2] == 'ui' 
+                return name.to_sym
+            end
             cur = @oprnds[0]
             while (cur.class != Var)
+                if cur.name[0] == 'i' || cur.name[0,2] == 'ui' 
+                    return cur.name.to_sym; 
+                end
                 cur = cur.oprnds[0]
             end
             return cur.type
@@ -63,7 +69,7 @@ module SimInfra
     class Var
     include SimInfra
 
-        (R_TYPE_INSNS + I_ALU_TYPE_INSNS).each do |op|
+        (R_ALU_TYPE_INSNS + I_ALU_TYPE_INSNS).each do |op|
             define_method(op) { |other| @scope.public_send(op, self, other) }
         end
 

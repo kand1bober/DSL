@@ -7,16 +7,49 @@ module RV32I
     include SimInfra
 
     #---------- R ----------
-    def self.make_r(name)
+    def self.make_r_alu(name)
         Instruction(name, XReg(:rd), XReg(:rs1), XReg(:rs2)) {
             encoding *format_r(name.to_s.to_sym, rd, rs1, rs2)
             asm { "#{name} #{rd}, #{rs1}, #{rs2}" }
             code { rd[]= rs1.send(name, rs2) } #call for rs1 method with "name", passing rs2 as argument                      
         }
     end
-    R_TYPE_INSNS.each do |name| 
-        make_r(name)
+    R_ALU_TYPE_INSNS.each do |name| 
+        make_r_alu(name)
     end
+
+    def self.make_r_mul(name, &block_code)
+        Instruction(name, XReg(:rd), XReg(:rs1), XReg(:rs2)) {
+            encoding *format_r(name.to_s.to_sym, rd, rs1, rs2)
+            asm { "#{name} #{rd}, #{rs1}, #{rs2}" }
+            code { instance_exec(rd, rs1, rs2, &block_code) }
+        }
+    end
+    make_r_mul(:mul) { |rd, rs1, rs2| 
+        rd[]= bit_extract(op_mul(i64(rs1), i64(rs2)), 31, 0) 
+    }
+    make_r_mul(:mulh) { |rd, rs1, rs2| 
+        rd[]= bit_extract(op_mul(i64(rs1), i64(rs2)), 63, 32) 
+    }
+    make_r_mul(:mulhsu) { |rd, rs1, rs2| 
+        rd[]= bit_extract(op_mul(i64(rs1), ui64(rs2)), 63, 32) 
+    }
+    make_r_mul(:mulhu) { |rd, rs1, rs2| 
+        rd[]= bit_extract(op_mul(ui64(rs1), ui64(rs2)), 63, 32) 
+    }
+
+    make_r_mul(:div) { |rd, rs1, rs2| 
+        rd[]= op_div_signed(rs1, rs2) 
+    }
+    make_r_mul(:divu) { |rd, rs1, rs2| 
+        rd[]= op_div_unsign(rs1, rs2) 
+    }
+    make_r_mul(:rem) { |rd, rs1, rs2| 
+        rd[]= op_rem_signed(rs1, rs2) 
+    }
+    make_r_mul(:remu) { |rd, rs1, rs2| 
+        rd[]= op_rem_unsign(rs1, rs2) 
+    }
 
     #---------- I ----------
     def self.make_i_alu(name)

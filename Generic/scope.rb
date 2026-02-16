@@ -70,8 +70,8 @@ module SimInfra
         # unary
         # it is possible to make unary operations with the choice of constants, 
         # then you need another type of operation.
-        [:ui8, :ui16, :ui32,
-         :i8,  :i16,  :i32].each do |op|
+        [:ui8, :ui16, :ui32, :ui64,
+         :i8,  :i16,  :i32,  :i64].each do |op|
             define_method(op) { |a| un_op(a, op) }
         end     
 
@@ -101,14 +101,6 @@ module SimInfra
             define_method(op) { |a, b, c| ternary_op(a, b, c, op)}
         end
         
-        # conditional operator
-        def cond_op(attrs= nil, a, &block)
-            a = resolve_const(a)
-            self.instance_eval(&block)
-            #this is based on the fact, that :let operation is the last in code tree at this moment
-            stmt(:cond_op, [a, @tree.last], attrs)   
-        end
-        
         #----- COMPOUND OPS -----
         #----- R -----
         def slt(a, b) ternary(less_signed(a, b), 1, 0) end
@@ -118,10 +110,10 @@ module SimInfra
         def srl(a, b) op_srl(a, bit_extract(b, 4, 0)) end     
         def sra(a, b) op_sra(a, bit_extract(b, 4, 0)) end
 
-        def mul(a, b) bit_extract(op_mul(i32(a), i32(b)), 31, 0) end
-        def mulh(a, b) bit_extract(op_mul(i32(a), i32(b)), 63, 32) end
-        def mulhsu(a, b) bit_extract(op_mul(i32(a), ui32(b)), 63, 32) end
-        def mulhu(a, b) bit_extract(op_mul(ui32(a), ui32(b)), 63, 32) end
+        # def mul(a, b) bit_extract(op_mul(i64(a), i64(b)), 31, 0) end
+        # def mulh(a, b) bit_extract(op_mul(i64(a), i64(b)), 63, 32) end
+        # def mulhsu(a, b) bit_extract(op_mul(i64(a), ui64(b)), 63, 32) end
+        # def mulhu(a, b) bit_extract(op_mul(ui64(a), ui64(b)), 63, 32) end
 
         def div(a, b) op_div_signed(a, b) end
         def divu(a, b) op_div_unsign(a, b) end
@@ -141,15 +133,6 @@ module SimInfra
         def slli(a, b) op_sll(a, bit_extract(b, 4, 0)) end
         def srli(a, b) op_srl(a, bit_extract(b, 4, 0)) end
         def srai(a, b) op_sra(a, bit_extract(b, 4, 0)) end
-
-        # #----- S -----
-        # def sb(a, imm, b) (mem8(add(a, se(imm, 12)))).[]= ui8(bit_extract(b, 7, 0)) end
-        # def sh(a, imm, b) (mem16(add(a, se(imm, 12)))).[]= ui16(bit_extract(b, 16, 0)) end
-        # def sw(a, imm, b) (mem32(add(a, se(imm, 12)))).[]= b end
-
-        #----- U -----
-        def lui(imm, pc) op_sll(imm, 12) end
-        def auipc(imm, pc) add(pc, op_sll(imm, 12)) end
 
 #-----------------------------------------
     end
