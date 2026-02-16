@@ -64,6 +64,7 @@ module InterpreterGenerator
         special: {
             ternary: 'ternary',
             cond_op: 'if',
+            raiseException: 'raiseException',
         },
         unary: { # --- here are expressions, not statement
             ui8:  'uint8_t', 
@@ -135,7 +136,7 @@ module InterpreterGenerator
 
     def self.get_call_params(stmt) 
         params = String.new() 
-        stmt[:oprnds][1..-1].each do |oprnd|
+        stmt[:oprnds][1..-1].each do |oprnd| 
             params << ", #{get_operand_val(oprnd)}"
         end
         return params
@@ -163,6 +164,8 @@ module InterpreterGenerator
                         str = "#{op_val} ((bool)#{get_operand_val(code.oprnds[0])}) {\n" +
                             "\t#{get_stmt_val(code.oprnds[1])}\n" +  
                             "\t}"
+                    when :raiseException 
+                        str = "#{op_val}(spu, #{code.oprnds[0].upcase});"
                 end
             when :self_realized
                 dst = get_operand_val(code.oprnds[0])

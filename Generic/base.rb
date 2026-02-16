@@ -84,7 +84,9 @@ module SimInfra
     
     J_TYPE_INSNS = [:jal]
 
+    SYS_TYPE_INSNS = [:ecall, :ebreak]
+
     ALL_INSNS = R_ALU_TYPE_INSNS + R_MUL_TYPE_INSNS + I_ALU_TYPE_INSNS + I_SHIFT_TYPE_INSNS + 
                 I_MEM_TYPE_INSNS + I_JUMP_TYPE_INSNS + S_TYPE_INSNS +
-                B_TYPE_INSNS + U_TYPE_INSNS + J_TYPE_INSNS
+                B_TYPE_INSNS + U_TYPE_INSNS + J_TYPE_INSNS + SYS_TYPE_INSNS
 end

@@ -120,3 +120,37 @@ Register writeMem32(SPU& spu, uint32_t addr, Register val) {
     *(uint32_t*)((char*)(&spu.mem.data[0]) + addr) = val;
     return 0;
 }
+
+void raiseException(SPU& spu, Register except_code) {
+    switch (except_code) {
+        // ecall
+        case ENV_CALL: { 
+            switch(spu.cpu.regs[10]) {
+                // print int
+                case PRINT_INT: {
+                    std::cout << spu.cpu.regs[11] << std::endl;
+                    break;
+                }
+                // exit
+                case EXIT: {
+                    std::exit(EXIT_SUCCESS);
+                    break;
+                }
+                default: {
+                    std::cout << "Unknown exception code in 'raiseException'" << std::endl;
+                    break;
+                }
+            }
+            break;
+        }
+        // ebreak
+        case BREAKPOINT: {
+
+            break;
+        }
+        default: {
+            std::cout << "Unknown exception code in 'raiseException'" << std::endl;
+            break;
+        }
+    }
+}

@@ -227,4 +227,24 @@ module SimInfra
         }[name]
         format_i(rs1, funct3, rd, 0b1100111)
     end
+
+    def format_sys(name)
+        
+        opcode_field = field(:opcode, 6, 0, 0b1110011)
+        funct3_field = field(:funct3, 14, 12, 0)
+
+        funct12 = {
+            ecall: 0,
+            ebreak: 1,
+        }[name]
+
+        funct12_field = field(:funct12, 31, 20, funct12)
+        
+        return :Sys, [
+            funct3_field, 
+            funct12_field,
+            opcode_field
+        ], lead_bits([funct3_field, funct12_field, opcode_field])
+
+    end
 end

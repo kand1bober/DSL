@@ -172,5 +172,15 @@ module RV32I
     J_TYPE_INSNS.each do |name|
         make_j(name)
     end
-end
 
+    def self.make_sys(name, &block_code) 
+        Instruction(name) {
+            encoding *format_sys(name.to_s.to_sym)
+            asm { "#{name}" }
+            code { instance_exec(&block_code) }                       
+        }
+    end
+
+    make_sys(:ecall) { self.raiseException('env_call') }
+    # make_sys(:ebreak) { self.raiseException('ebreak') }
+end

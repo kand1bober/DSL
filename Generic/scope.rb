@@ -82,6 +82,8 @@ module SimInfra
             define_method(writeMem) { |addr, val| bin_op(addr, val, writeMem) }
         end
         
+        define_method(:raiseException) { |except_code| stmt(:raiseException, [except_code]) } 
+
         # binary 
         [:add, :sub,      # instruction and operation have same representation,
          :xor, :or, :and, # but in their case it is not a problem
@@ -109,17 +111,7 @@ module SimInfra
         def sll(a, b) op_sll(a, bit_extract(b, 4, 0)) end        
         def srl(a, b) op_srl(a, bit_extract(b, 4, 0)) end     
         def sra(a, b) op_sra(a, bit_extract(b, 4, 0)) end
-
-        # def mul(a, b) bit_extract(op_mul(i64(a), i64(b)), 31, 0) end
-        # def mulh(a, b) bit_extract(op_mul(i64(a), i64(b)), 63, 32) end
-        # def mulhsu(a, b) bit_extract(op_mul(i64(a), ui64(b)), 63, 32) end
-        # def mulhu(a, b) bit_extract(op_mul(ui64(a), ui64(b)), 63, 32) end
-
-        def div(a, b) op_div_signed(a, b) end
-        def divu(a, b) op_div_unsign(a, b) end
-        def rem(a, b) op_rem_signed(a, b) end
-        def remu(a, b) op_rem_unsign(a, b) end
-        
+ 
         #----- I -----
             #--- I_ALU ---
         def addi(a, b) add(a, se(b, 12)) end

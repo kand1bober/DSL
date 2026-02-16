@@ -8,6 +8,17 @@
 #ifndef OPERATIONS_HEADER
 #define OPERATIONS_HEADER
 
+enum Exception {
+    ENV_CALL = 0,
+    BREAKPOINT = 1,
+};
+
+enum Ecall {
+    PRINT_INT = 1,
+    READ_INT = 5,
+    EXIT = 10,
+};
+
 Register bit_extract(SPU& spu, int64_t src, Register from, Register to);
 
 bool less_signed(SPU& spu, Register a, Register b);
@@ -32,5 +43,7 @@ Register readMem32(SPU& spu, uint32_t addr);
 Register writeMem8(SPU& spu, uint32_t addr, Register val);
 Register writeMem16(SPU& spu, uint32_t addr, Register val);
 Register writeMem32(SPU& spu, uint32_t addr, Register val);
+
+void raiseException(SPU& spu, Register except_code);
 
 #endif

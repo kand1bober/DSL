@@ -27,22 +27,16 @@ void SPU::run() {
         if (!(insn.insn_type >= BEQ && insn.insn_type <= JAL)) {
             cpu.pc += 4;
         }        
-
-        // Проверяем результаты
-        std::cout << "mem[0] = " << readMem32(*this, 0) << " (ожидается 3)" << std::endl;
-        std::cout << "mem[4] = " << readMem32(*this, 4) << " (ожидается 7)" << std::endl; 
-        std::cout << "mem[8] = " << readMem32(*this, 8) << " (ожидается 14)" << std::endl;
     }
 }
 
 void SPU::load_elf(const std::string& filename) {
-    program.resize((1 << 20) * 128); // 128 Mbytes
-
     ELFIO::elfio reader;
     if (!reader.load(filename)) {
         throw std::runtime_error("Failed to load ELF");
     }
 
+    ELFIO::Elf64_Word prog_size = 0;
     ELFIO::Elf_Half seg_num = reader.segments.size();
     for (int i = 0; i < seg_num; i++) {
         const ELFIO::segment* pseg = reader.segments[i];
@@ -52,10 +46,14 @@ void SPU::load_elf(const std::string& filename) {
             ELFIO::Elf64_Word filesz = pseg->get_file_size();
             ELFIO::Elf64_Word memsz = pseg->get_memory_size();
             const char* data = pseg->get_data(); // Access segments's data
-            
-            std::cout << "Loading segment at 0x" << std::hex << vaddr 
-                      << ", size: " << std::dec << filesz 
-                      << " (file) / " << memsz << " (mem)" << std::endl;
+
+            // resize ram
+            prog_size += memsz;
+            program.resize(prog_size);    
+
+            // std::cout << "Loading segment at 0x" << std::hex << vaddr 
+            //           << ", size: " << std::dec << filesz 
+            //           << " (file) / " << memsz << " (mem)" << std::endl;
             
             // Copy data to memory
             for (size_t j = 0; j < filesz; ++j) {

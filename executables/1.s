@@ -11,5 +11,9 @@ _start:
     addi x7, x0, 2
     mul x6, x5, x7
     sw x6, 8(x0)
+    
+    li x10, 10
+    ecall
+
 loop:
     j loop
