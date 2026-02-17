@@ -60,6 +60,13 @@ Instruction decode(SPU& spu, Register machine_word) {
                     throw std::runtime_error("Unknown insn: 0x" + std::to_string(machine_word));
             }
         }
+        case 0xf: {
+                insn.insn_type = FENCE;
+                insn.oprnds = {
+
+                };
+            return insn;
+        }
         case 0x13: {
             // Extract bits [14:12] (width: 3)
             uint32_t field_14_12 = (machine_word) & (0x7 << 12);

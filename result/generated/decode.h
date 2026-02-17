@@ -20,6 +20,7 @@ enum InsnType {
 	LW,
 	LBU,
 	LHU,
+	FENCE,
 	ADDI,
 	SLLI,
 	SLTI,

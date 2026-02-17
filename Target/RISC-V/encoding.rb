@@ -229,22 +229,31 @@ module SimInfra
     end
 
     def format_sys(name)
+        case name
+            when :ecall, :ebreak
+                opcode_field = field(:opcode, 6, 0, 0b1110011)
+                funct3_field = field(:funct3, 14, 12, 0)
+
+                funct12 = {
+                    ecall: 0,
+                    ebreak: 1,
+                }[name]
+
+                funct12_field = field(:funct12, 31, 20, funct12)
+                
+                return :Sys, [
+                    funct3_field, 
+                    funct12_field,
+                    opcode_field
+                ], lead_bits([funct3_field, funct12_field, opcode_field])
+            when :fence
+                opcode_field = field(:opcode, 6, 0, 0b0001111)            
+                funct3_field = field(:funct3, 14, 12, 0)
+                return :Sys, [
+                    funct3_field, 
+                    opcode_field
+                ], lead_bits([funct3_field, opcode_field])                
+        end
         
-        opcode_field = field(:opcode, 6, 0, 0b1110011)
-        funct3_field = field(:funct3, 14, 12, 0)
-
-        funct12 = {
-            ecall: 0,
-            ebreak: 1,
-        }[name]
-
-        funct12_field = field(:funct12, 31, 20, funct12)
-        
-        return :Sys, [
-            funct3_field, 
-            funct12_field,
-            opcode_field
-        ], lead_bits([funct3_field, funct12_field, opcode_field])
-
     end
 end

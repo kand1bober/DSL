@@ -9,14 +9,15 @@
 #define OPERATIONS_HEADER
 
 enum Exception {
-    ENV_CALL = 0,
-    BREAKPOINT = 1,
+    ECALL_CODE,
+    EBREAK_CODE,
+    FENCE_CODE,
 };
 
 enum Ecall {
-    PRINT_INT = 1,
-    READ_INT = 5,
-    EXIT = 10,
+    WRITE = 64,
+    READ = 5,
+    EXIT = 93,
 };
 
 Register bit_extract(SPU& spu, int64_t src, Register from, Register to);

@@ -181,7 +181,7 @@ module RV32I
         }
     end
 
-    make_sys(:ecall) { self.raiseException('env_call') }
-    # make_sys(:fence) { self.raiseException('env_call') }
+    make_sys(:ecall) { self.raiseException('ecall_code') }
+    make_sys(:fence) { self.raiseException('fence_code') }
     # make_sys(:ebreak) { self.raiseException('ebreak') }
 end

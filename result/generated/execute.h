@@ -48,6 +48,7 @@
 	void exec_auipc(SPU& spu, Register rd, Register imm);
 	void exec_jal(SPU& spu, Register rd, Register imm);
 	void exec_ecall(SPU& spu);
+	void exec_fence(SPU& spu);
 
 	void execute(SPU& spu, Instruction& insn);
 

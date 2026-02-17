@@ -188,6 +188,10 @@ void execute(SPU& spu, Instruction& insn) {
 			exec_ecall(spu);
 			break;
 		}
+		case FENCE: {
+			exec_fence(spu);
+			break;
+		}
 		throw std::runtime_error("Unknown enum: " + std::to_string(insn.insn_type));
 	}
 }
@@ -936,6 +940,11 @@ void exec_jal(SPU &spu, Register par_rd, Register par_imm) {
 
 void exec_ecall(SPU &spu) {
 	std::cout << "ecall" << std::endl;
-	raiseException(spu, ENV_CALL);;
+	raiseException(spu, ECALL_CODE);;
+}
+
+void exec_fence(SPU &spu) {
+	std::cout << "fence" << std::endl;
+	raiseException(spu, FENCE_CODE);;
 }
 

@@ -124,15 +124,17 @@ Register writeMem32(SPU& spu, uint32_t addr, Register val) {
 void raiseException(SPU& spu, Register except_code) {
     switch (except_code) {
         // ecall
-        case ENV_CALL: { 
-            switch(spu.cpu.regs[10]) {
+        case ECALL_CODE: { 
+            switch(spu.cpu.regs[17]) {
                 // print int
-                case PRINT_INT: {
+                case WRITE: {
                     std::cout << spu.cpu.regs[11] << std::endl;
                     break;
                 }
                 // exit
                 case EXIT: {
+
+                    std::cout << "exit code: " << spu.cpu.regs[10] << std::endl;
                     std::exit(EXIT_SUCCESS);
                     break;
                 }
@@ -144,8 +146,12 @@ void raiseException(SPU& spu, Register except_code) {
             break;
         }
         // ebreak
-        case BREAKPOINT: {
+        case EBREAK_CODE: {
 
+            break;
+        }
+        case FENCE_CODE: {
+            // nothing
             break;
         }
         default: {
