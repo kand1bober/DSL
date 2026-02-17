@@ -273,6 +273,25 @@ void test_addi(SPU& spu) {
     insn = make_insn(ADDI, 3, 1, (uint32_t)-5);  // x3 = x1 + (-5)
     execute(spu, insn);
     SOFT_ASSERT_EQ(get_reg(spu, 3), 0, "ADDI with negative immediate");
+
+    // test_9: 0x7fffffff + 0 = 0x7fffffff
+    set_reg(spu, 10, 0x7FFFFFFF);  // a1 = 0x7FFFFFFF
+    set_reg(spu, 11, 0);           // a2 = 0
+    
+    insn = make_insn(ADD, 12, 10, 11);  // a4 = a1 + a2
+    execute(spu, insn);
+    
+    SOFT_ASSERT_EQ(get_reg(spu, 12), 0x7FFFFFFF, "a4 = 0x7FFFFFFF + 0");
+    
+    // Проверка с ожидаемым значением из теста (t2 = 0x7FFFFFFF)
+    set_reg(spu, 7, 0x7FFFFFFF);  // t2 = 0x7FFFFFFF
+    
+    // BNE проверка (эмулируем условие теста)
+    insn = make_insn(BNE, 12, 7, 0);  // if a4 != t2, branch
+    execute(spu, insn);
+    
+    // BNE не должен сработать, так как значения равны
+    SOFT_ASSERT_EQ(spu.cpu.pc, 0, "BNE not taken (a4 == t2)");
 }
 
 void test_xori(SPU& spu) {

@@ -131,7 +131,7 @@ module RV32I
             encoding *format_b(name.to_s.to_sym, rs1, rs2)
             asm { "#{name} #{rs1}, #{rs2}, #{imm}" }    
             code { 
-                pc.add_assign ternary(send(cond, rs1, rs2), se(op_sll(imm, 1), 13), 0)   
+                pc.add_assign ternary(send(cond, rs1, rs2), se(imm, 13), 0)   
             }
         }
     end
@@ -165,7 +165,7 @@ module RV32I
             asm { "#{name} #{rd}, #{imm}" }
             code { 
                 rd[]= add(pc, 4)
-                pc.add_assign se(op_sll(imm, 1), 21)
+                pc.add_assign se(imm, 21)
             }                       
         }
     end
@@ -182,5 +182,6 @@ module RV32I
     end
 
     make_sys(:ecall) { self.raiseException('env_call') }
+    # make_sys(:fence) { self.raiseException('env_call') }
     # make_sys(:ebreak) { self.raiseException('ebreak') }
 end

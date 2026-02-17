@@ -5,7 +5,7 @@
 
 int main(int argc, char* argv[])
 {
-    SPU spu{};
+    SPU spu{0};
 
     if (argc != 2) {
         std::cout << "Correct usage: sim executables/<filename>" << std::endl;
@@ -14,10 +14,6 @@ int main(int argc, char* argv[])
     spu.load_elf(argv[1]);
 
     spu.run();
-
-    std::cout << "mem[0] = " << readMem32(spu, 0) << " (ожидается 3)" << std::endl;
-    std::cout << "mem[4] = " << *((uint32_t*)&spu.mem.data[4]) << " (ожидается 7)" << std::endl; 
-    std::cout << "mem[8] = " << *((uint32_t*)&spu.mem.data[8]) << " (ожидается 14)" << std::endl;
 
     return 0;
 }

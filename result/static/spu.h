@@ -11,11 +11,13 @@ typedef int32_t  SignedRegister;
 
 struct CPU { 
     std::array<Register, 32> regs;
+
+    Register old_pc;
     Register pc;
 };
 
 struct Ram {
-    std::array<uint8_t, 4096> data;
+    std::array<uint8_t, 1 << 20> data;
 };
 
 class SPU {
