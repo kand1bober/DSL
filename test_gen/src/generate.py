@@ -46,70 +46,99 @@ class test_values_t:
     rs2_val: int
     imm_val: int
 
-    # insn_syntax: str
-    # TODO: как вытащить синтакисис из IR в виде <insn> rd, rs1, rs3 и 
-    # преобразовать в конкретные номера регистров x1, x2, ... 
+    core_semantic: str
+    cmp_semantic:  str
 
 # Constants
-elf_file = "tmp/tmp.elf"
 log_file = "tmp/log.txt"
 test_header = "<_begin_test>:"
+
 test_insns = [ 
     test_insn_t("add", {"rs1": [0, 10], "rs2": [0, 10]}),
     test_insn_t("sub", {"rs1": [0, 10], "rs2": [0, 10]}),
 ]
 
-def gen_tests(test_insns):
-    test_arr = []
-    test = test_values_t()
+def gen_test_value(insn, ir):
+    test_values = test_values_t()
+    # insn_metadata = ir_work.insn_metadata_t() 
 
-    ir = ir_work.read_ir()
-    insn_metadata = ir_work.insn_metadata_t() 
+    if insn.name in ir:
+        # TODO: цикл for на количество тестов для одной инструкции 
+        insn_metadata = ir[insn.name]
 
-    for insn in test_insns:
-        if insn.name in ir:
-            # TODO: цикл for на количество тестов для одной инструкции 
-            insn_metadata = ir[insn.name]
+        if ("rs1" in insn_metadata.operands) & ("rs1" in insn.ranges):
+            test_values.rs1_val = np.random.randint(
+                insn.ranges["rs1"][0],
+                insn.ranges["rs1"][1],
+            )
+        
+        if ("rs2" in insn_metadata.operands) & ("rs2" in insn.ranges):
+            test_values.rs2_val = np.random.randint(
+                insn.ranges["rs2"][0],
+                insn.ranges["rs2"][1],
+            )
+    
+        if ("imm" in insn_metadata.operands) & ("imm" in insn.ranges):
+            test_values.imm_val = np.random.randint(
+                insn.ranges["imm"][0],
+                insn.ranges["imm"][1],
+            )
+    return test_values
 
-            if "rs1" in insn_metadata.operands & "rs1" in insn.ranges:
-                test.rs1_val = np.random.randint(
-                    insn["rs1"][0],
-                    insn["rs1"][1],
-                )
-            
-            if "rs2" in insn_metadata.operands & "rs1" in insn.ranges:
-                test.rs2_val = np.random.randint(
-                    insn["rs2"][0],
-                    insn["rs2"][1],
-                )
+def make_test_elf(ir, insn):
+    # test_arr = []
 
-            
-            if "imm" in insn_metadata.operands & "imm" in insn.ranges:
-                test.imm_val = np.random.randint(
-                    insn["imm"][0],
-                    insn["imm"][1],
-                )
-            
-            test_arr.append(test)
-    return test_arr
+    # собрать данные для нескольких тестов одной инструкции(пока один тест на инструкцию)
+    test_values = gen_test_value(insn, ir)
 
-def main():
-    test_arr = gen_tests(test_insns)
+    # у каждого теста есть набор данных и строковая репрезентация, также строку со сравнением с голденом можно добавить как отдельное поле   
+    # str = ""
+    # str.apppend()
+    
+    # write to file.asm
+    test_file = f"bin_tests/rv32_{insn.name}.s"
+    with open(test_file, "w", encoding="utf-8") as f:
+        f.write(test_header + "\n")
 
-    # execute on golden model
+    # compile .asm to .elf
+    asm_name = f"bin_tests/rv32_{insn.name}"
     subprocess.run(
         [
-            "qemu-riscv32",
-            "-d", "in_asm,cpu",
-            "-D", log_file,
-            elf_file
-        ],
-        check=True
+            "link.sh", 
+            asm_name
+        ]
     )
 
-    # parse result of work of golden model 
-    
-    # add golden model reference values to asm
+def main():
+    ir = ir_work.read_ir("../result/generated/IR.yaml")
+    for insn in test_insns:
+        make_test_elf(ir, insn)
+
+
+    # test_arr = gen_test_values(test_insns)
+    # for test in test_arr:
+    #     str = make_test_str(test)
+    #     # append str to file elf_file
+
+    # # execute on golden model
+    # subprocess.run(
+    #     [
+    #         "qemu-riscv32",
+    #         "-d", "in_asm,cpu",
+    #         "-D", log_file,
+    #         elf_file
+    #     ],
+    #     check=True
+    # )
+
+    # # parse result of work of golden model 
+    # # parse()
+
+    # # add golden model reference values to asm
+    # for test in test_arr:
+    #     str = make_test_str(test)
+    #     add_cmp(str, golden_ref)
+    #     # append str to file "bin_tests/<insn.name>"
 
 
 # direct execution

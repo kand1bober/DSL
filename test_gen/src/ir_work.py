@@ -36,11 +36,18 @@ def read_ir(filename):
             continue  # или raise
 
         # splitting 'asm' field into operands
-        insn_name, ops_part = asm.split(None, 1)
-        ops = tuple(x.strip() for x in ops_part.split(","))
+        print(asm)
+
+        parts = asm.split(None, 1)
+        insn_name = parts[0]
+        if len(parts) == 2:
+            ops = tuple(x.strip() for x in parts[1].split(",()"))
+        else:
+            ops = ()
+
         table[name] = insn_metadata_t(
-            syntax= asm, 
-            operands= ops
+            syntax=asm,
+            operands=ops
         )
 
     return table
