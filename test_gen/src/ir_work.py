@@ -1,6 +1,7 @@
 import yaml
 from dataclasses import dataclass 
 from typing import Tuple
+import re
 
 @dataclass
 class insn_metadata_t:
@@ -36,12 +37,16 @@ def read_ir(filename):
             continue  # или raise
 
         # splitting 'asm' field into operands
-        print(asm)
+        # print(asm)
 
         parts = asm.split(None, 1)
-        insn_name = parts[0]
+        # insn_name = parts[0]
         if len(parts) == 2:
-            ops = tuple(x.strip() for x in parts[1].split(",()"))
+            ops = tuple(
+                x.strip()
+                for x in re.split(r"[(),]", parts[1])
+                if x.strip()
+            )
         else:
             ops = ()
 

@@ -39,86 +39,121 @@ class test_insn_t:
     name: str
     ranges: dict[str, list[int]]
 
-class test_values_t:
+@dataclass
+class test_info_t:
     test_num: int
 
-    rs1_val: int
-    rs2_val: int
-    imm_val: int
+    rd_val: bool
+    rs1_val: tuple[int, bool] = (None, False)
+    rs2_val: tuple[int, bool] = (None, False)
+    imm_val: tuple[int, bool] = (None, False)
 
-    core_semantic: str
-    cmp_semantic:  str
+    core_semantic: str= ""
+    cmp_semantic:  str= ""
 
 # Constants
 log_file = "tmp/log.txt"
-test_header = "<_begin_test>:"
+INDENT = "\t"
 
 test_insns = [ 
-    test_insn_t("add", {"rs1": [0, 10], "rs2": [0, 10]}),
-    test_insn_t("sub", {"rs1": [0, 10], "rs2": [0, 10]}),
+    test_insn_t("add", {"rs1": [-100, 100], "rs2": [-100, 100]}),
+    test_insn_t("sub", {"rs1": [-100, 100], "rs2": [-100, 100]}),
 ]
 
 def gen_test_value(insn, ir):
-    test_values = test_values_t()
-    # insn_metadata = ir_work.insn_metadata_t() 
+    tests_info: list[test_info_t] = [test_info_t(test_num=0, rd_val=False)]
 
     if insn.name in ir:
         # TODO: цикл for на количество тестов для одной инструкции 
         insn_metadata = ir[insn.name]
 
-        if ("rs1" in insn_metadata.operands) & ("rs1" in insn.ranges):
-            test_values.rs1_val = np.random.randint(
-                insn.ranges["rs1"][0],
-                insn.ranges["rs1"][1],
+        if ("rs1" in insn_metadata.operands) and ("rs1" in insn.ranges):
+            tests_info[0].rs1_val = ( 
+                np.random.randint(
+                    insn.ranges["rs1"][0],
+                    insn.ranges["rs1"][1],
+                ), 
+                True
             )
         
-        if ("rs2" in insn_metadata.operands) & ("rs2" in insn.ranges):
-            test_values.rs2_val = np.random.randint(
-                insn.ranges["rs2"][0],
-                insn.ranges["rs2"][1],
+        if ("rs2" in insn_metadata.operands) and ("rs2" in insn.ranges):
+            tests_info[0].rs2_val = (
+                np.random.randint(
+                    insn.ranges["rs2"][0],
+                    insn.ranges["rs2"][1],
+                ), 
+                True
             )
     
-        if ("imm" in insn_metadata.operands) & ("imm" in insn.ranges):
-            test_values.imm_val = np.random.randint(
-                insn.ranges["imm"][0],
-                insn.ranges["imm"][1],
+        if ("imm" in insn_metadata.operands) and ("imm" in insn.ranges):
+            tests_info[0].imm_val = (
+                np.random.randint(
+                    insn.ranges["imm"][0],
+                    insn.ranges["imm"][1],
+                ), 
+                True 
             )
-    return test_values
 
-def make_test_elf(ir, insn):
-    # test_arr = []
+        if "rd" in insn_metadata.operands:
+            tests_info[0].rd_val = True            
 
-    # собрать данные для нескольких тестов одной инструкции(пока один тест на инструкцию)
-    test_values = gen_test_value(insn, ir)
+    return tests_info
 
-    # у каждого теста есть набор данных и строковая репрезентация, также строку со сравнением с голденом можно добавить как отдельное поле   
-    # str = ""
-    # str.apppend()
-    
-    # write to file.asm
+def gen_tests_asm(insn, tests_info, ir):
+    for i, test_info in enumerate(tests_info):
+        code = test_info.core_semantic
+        code += f"<_begin_test_{i}>:\n"
+        code += f"li{INDENT}gp,{i}\n"
+        
+        syntax = ir[insn.name].syntax
+
+        print(insn.name, ir[insn.name].operands, insn.ranges)
+        
+        if test_info.rs1_val[1]: # replace rs1 with register name
+            code += f"li a1, {test_info.rs1_val[0]}\n"
+            syntax = syntax.replace("rs1", "a1")
+        if test_info.rs2_val[1]:
+            code += f"li a2, {test_info.rs2_val[0]}\n"
+            syntax = syntax.replace("rs2", "a2")
+        if test_info.rd_val:
+            syntax = syntax.replace("rd", "a4")
+            
+        code += syntax
+        code += "\n"
+
+        test_info.core_semantic = code
+
+def write_asm(insn, tests_info):
     test_file = f"bin_tests/rv32_{insn.name}.s"
     with open(test_file, "w", encoding="utf-8") as f:
-        f.write(test_header + "\n")
+        for test_info in tests_info:
+            f.write(test_info.core_semantic)
+            f.write(test_info.cmp_semantic)
 
-    # compile .asm to .elf
-    asm_name = f"bin_tests/rv32_{insn.name}"
-    subprocess.run(
-        [
-            "link.sh", 
-            asm_name
-        ]
-    )
+def make_test_elf(ir, insn):
+    # собрать данные для нескольких тестов одной инструкции(пока один тест на инструкцию)
+    tests_info = gen_test_value(insn, ir)
+
+    # у каждого теста есть набор данных и строковая репрезентация,
+    # также строку со сравнением с голденом можно добавить как отдельное поле   
+    gen_tests_asm(insn, tests_info, ir)
+
+    # write to file.s
+    write_asm(insn, tests_info)
+
+    # # compile .s to .elf
+    # asm_name = f"bin_tests/rv32_{insn.name}"
+    # subprocess.run(
+    #     [
+    #         "link.sh", 
+    #         asm_name
+    #     ]
+    # )
 
 def main():
     ir = ir_work.read_ir("../result/generated/IR.yaml")
     for insn in test_insns:
         make_test_elf(ir, insn)
-
-
-    # test_arr = gen_test_values(test_insns)
-    # for test in test_arr:
-    #     str = make_test_str(test)
-    #     # append str to file elf_file
 
     # # execute on golden model
     # subprocess.run(
