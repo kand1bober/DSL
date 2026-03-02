@@ -5,35 +5,6 @@ from typing import Tuple
 
 import ir_work
 
-# вместо: 
-# insns = ["""
-# li	gp,2
-# li	a1,0
-# li	a2,0
-# add	a4,a1,a2
-# li	t2,0
-# bne	a4,t2,80000670 <fail>
-# """, 
-# ]
-
-# делаем так: 
-test_insns = ["""
-2 # номер теста -- надо добавлять автоматически
-0 # значение первого операнда -- автоматически
-0 # значение второго операнда -- автоматически
-add	# инструкция -- вручную
-"""
-]
-
-# здесь запуск и парсинг golden модели 
-
-test_check = """
-li	t2, 0 # значение из golden модели 
-bne	a4,t2,80000670 <fail>
-"""
-
-#------------------------------------------------     
-
 @dataclass
 class test_insn_t:
     name: str
@@ -55,10 +26,12 @@ class test_info_t:
 log_file = "tmp/log.txt"
 INDENT = "\t"
 
+# ------------------- Input ---------------------
 test_insns = [ 
     test_insn_t("add", {"rs1": [-100, 100], "rs2": [-100, 100]}),
     test_insn_t("sub", {"rs1": [-100, 100], "rs2": [-100, 100]}),
 ]
+# -----------------------------------------------
 
 def gen_test_value(insn, ir):
     tests_info: list[test_info_t] = [test_info_t(test_num=0, rd_val=False)]
@@ -102,7 +75,7 @@ def gen_test_value(insn, ir):
 def gen_tests_asm(insn, tests_info, ir):
     for i, test_info in enumerate(tests_info):
         code = test_info.core_semantic
-        code += f"<_begin_test_{i}>:\n"
+        code += f"_begin_test_{i}:\n"
         code += f"li{INDENT}gp,{i}\n"
         
         syntax = ir[insn.name].syntax
@@ -117,7 +90,7 @@ def gen_tests_asm(insn, tests_info, ir):
             syntax = syntax.replace("rs2", "a2")
         if test_info.rd_val:
             syntax = syntax.replace("rd", "a4")
-            
+        
         code += syntax
         code += "\n"
 
@@ -131,24 +104,23 @@ def write_asm(insn, tests_info):
             f.write(test_info.cmp_semantic)
 
 def make_test_elf(ir, insn):
-    # собрать данные для нескольких тестов одной инструкции(пока один тест на инструкцию)
+    # collect tests data for this insn 
     tests_info = gen_test_value(insn, ir)
 
-    # у каждого теста есть набор данных и строковая репрезентация,
-    # также строку со сравнением с голденом можно добавить как отдельное поле   
+    # make string representation of tests
     gen_tests_asm(insn, tests_info, ir)
 
     # write to file.s
     write_asm(insn, tests_info)
 
-    # # compile .s to .elf
-    # asm_name = f"bin_tests/rv32_{insn.name}"
-    # subprocess.run(
-    #     [
-    #         "link.sh", 
-    #         asm_name
-    #     ]
-    # )
+    # compile .s to .elf
+    asm_name = f"bin_tests/rv32_{insn.name}"
+    subprocess.run(
+        [
+            "bin_tests/link.sh", 
+            asm_name
+        ]
+    )
 
 def main():
     ir = ir_work.read_ir("../result/generated/IR.yaml")
