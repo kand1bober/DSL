@@ -15,7 +15,7 @@ class test_insn_t:
 class test_info_t:
     test_num: int
 
-    rd_val: bool
+    rd_val:  tuple[int, bool] = (None, False)
     rs1_val: tuple[int, bool] = (None, False)
     rs2_val: tuple[int, bool] = (None, False)
     imm_val: tuple[int, bool] = (None, False)
@@ -28,6 +28,35 @@ QEMU_LOG_FILE_NAME = "tmp/log.txt"
 TMP_DIR_NAME = "tmp"
 RES_DIR_NAME = "bin_tests"
 INDENT = "\t"
+
+FILE_HEADER = """
+.include "macros.inc"
+.section .text
+.globl _start
+_start:
+
+"""
+
+WRITE_GOLD_VAL_STR = """
+    PUSH a4
+    li a0, 1
+    la a1, sp
+    li a2, 4
+    li a7, 64
+    ecall
+"""
+
+FILE_END = """
+_pass:
+    li a0, 0
+    li a7, 93
+    ecall
+
+_fail:
+    mv a0, gp
+    li a7, 93
+    ecall
+"""
 
 # ------------------- Input ---------------------
 TEST_INSNS = [ 
@@ -69,34 +98,65 @@ def make_test_values(insn, ir, tests_info):
             )
 
         if "rd" in insn_metadata.operands:
-            tests_info[0].rd_val = True            
-
-def parse_golden(log_file_name):
-    return
+            tests_info[0].rd_val = (None, True)            
 
 # -----------------------------------------------
 def make_res_asm(insn, tests_info):
-    # RES_DIR_NAME
+    # make string representation of cmp part of tests
+    for i, test_info in enumerate(tests_info):
+        code = test_info.cmp_semantic        
 
-    return
+        # code += f"li	t2, {golden_val}"
+        code += f"bne	a4, t2, _fail:"
+
+        test_info.cmp_semantic = code
+
+    # write to file.s
+    test_file = f"{RES_DIR_NAME}/rv32_{insn.name}.s"
+    with open(test_file, "w", encoding="utf-8") as f:
+        f.write(FILE_HEADER)
+
+        for test_info in tests_info:
+            f.write(test_info.core_semantic)
+            
+            # cmp with golden
+            f.write(test_info.cmp_semantic)
+    
+            # jump added for qemu to log previous block separately
+            f.write("j _end\n")
+            f.write("_end:\n")
+        
+        # call exit
+        f.write(FILE_END)
+
+    # compile .s to .elf
+    asm_name = f"{RES_DIR_NAME}/rv32_{insn.name}"
+    subprocess.run(
+        [
+            "utility/link.sh", 
+            asm_name
+        ]
+    )
 
 def get_golden_ref(insn, tests_info):
     # execute on golden model
     elf_file = f"{TMP_DIR_NAME}/rv32_{insn.name}.elf"
-    subprocess.run(
+    proc = subprocess.run(
         [
             "qemu-riscv32",
             "-d", "in_asm,cpu",
             "-D", QEMU_LOG_FILE_NAME,
             elf_file
         ],
-        check=True
+        check=True,
+        capture_optput=True,
+        text=True
     )
 
-    # parse result of work of golden model 
-    parse_golden(QEMU_LOG_FILE_NAME)
+    out = proc.stdout
+    print(out)
 
-    # # add golden model reference values to asm
+    # add golden model reference values to asm
     # for test in test_arr:
     #     str = make_test_str(test)
     #     add_cmp(str, golden_ref)
@@ -110,36 +170,34 @@ def make_tmp_asm(ir, insn, tests_info):
     for i, test_info in enumerate(tests_info):
         code = test_info.core_semantic
         code += f"_begin_test_{i}:\n"
-        code += f"li{INDENT}gp,{i}\n"
+        code += f"{INDENT}li gp,{i}\n"
         
         syntax = ir[insn.name].syntax
         
         if test_info.rs1_val[1]: # replace rs1 with register name
-            code += f"li a1, {test_info.rs1_val[0]}\n"
+            code += f"{INDENT}li a1, {test_info.rs1_val[0]}\n"
             syntax = syntax.replace("rs1", "a1")
         if test_info.rs2_val[1]:
-            code += f"li a2, {test_info.rs2_val[0]}\n"
+            code += f"{INDENT}li a2, {test_info.rs2_val[0]}\n"
             syntax = syntax.replace("rs2", "a2")
         if test_info.rd_val:
             syntax = syntax.replace("rd", "a4")
         
-        code += syntax
+        code += INDENT + syntax
         code += "\n"
         test_info.core_semantic = code
 
     # write to file.s
     test_file = f"{TMP_DIR_NAME}/rv32_{insn.name}.s"
     with open(test_file, "w", encoding="utf-8") as f:
+        f.write(FILE_HEADER)
+
         for test_info in tests_info:
             f.write(test_info.core_semantic)
-            f.write(test_info.cmp_semantic)
-
-            f.write("j _end\n")
-            f.write("_end:\n")
-
-            f.write("li a0, 0\n")
-            f.write("li a7, 93\n")
-            f.write("ecall\n")
+            f.write(WRITE_GOLD_VAL_STR)
+                
+        # call exit
+        f.write(FILE_END)
 
     # compile .s to .elf
     asm_name = f"{TMP_DIR_NAME}/rv32_{insn.name}"
@@ -149,7 +207,6 @@ def make_tmp_asm(ir, insn, tests_info):
             asm_name
         ]
     )
-
     return tests_info
 
 # -----------------------------------------------
@@ -160,7 +217,7 @@ def main():
         tests_info: list[test_info_t] = [test_info_t(test_num=0, rd_val=False)]
         make_tmp_asm(ir, insn, tests_info)
         get_golden_ref(insn, tests_info)
-        make_res_asm(insn, tests_info)
+        # make_res_asm(insn, tests_info)
 
 # direct execution
 if __name__ == "__main__":
