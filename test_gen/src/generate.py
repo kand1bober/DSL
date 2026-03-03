@@ -2,6 +2,7 @@ import subprocess
 import numpy as np
 from dataclasses import dataclass 
 from typing import Tuple
+import struct
 
 import ir_work
 
@@ -40,7 +41,7 @@ _start:
 WRITE_GOLD_VAL_STR = """
     PUSH a4
     li a0, 1
-    la a1, sp
+    mv a1, sp
     li a2, 4
     li a7, 64
     ecall
@@ -149,12 +150,11 @@ def get_golden_ref(insn, tests_info):
             elf_file
         ],
         check=True,
-        capture_optput=True,
-        text=True
+        capture_output=True
     )
-
     out = proc.stdout
-    print(out)
+    vals = [struct.unpack_from("<i", out, i)[0] for i in range(0, len(out), 4)]
+    print(vals)
 
     # add golden model reference values to asm
     # for test in test_arr:
