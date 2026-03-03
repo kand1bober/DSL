@@ -16,7 +16,7 @@ class test_insn_t:
 class test_info_t:
     test_num: int
 
-    rd_val:  tuple[int, bool] = (None, False)
+    rd_ref_val:  tuple[int, bool] = (None, False) # ref value
     rs1_val: tuple[int, bool] = (None, False)
     rs2_val: tuple[int, bool] = (None, False)
     imm_val: tuple[int, bool] = (None, False)
@@ -99,17 +99,15 @@ def make_test_values(insn, ir, tests_info):
             )
 
         if "rd" in insn_metadata.operands:
-            tests_info[0].rd_val = (None, True)            
+            tests_info[0].rd_ref_val = (None, True)            
 
 # -----------------------------------------------
 def make_res_asm(insn, tests_info):
     # make string representation of cmp part of tests
     for i, test_info in enumerate(tests_info):
-        code = test_info.cmp_semantic        
-
-        # code += f"li	t2, {golden_val}"
-        code += f"bne	a4, t2, _fail:"
-
+        code = ""        
+        code += f"{INDENT}li t2, {test_info.rd_ref_val[0]}\n"
+        code += f"{INDENT}bne a4, t2, _fail\n"
         test_info.cmp_semantic = code
 
     # write to file.s
@@ -118,15 +116,11 @@ def make_res_asm(insn, tests_info):
         f.write(FILE_HEADER)
 
         for test_info in tests_info:
+            # main logic
             f.write(test_info.core_semantic)
-            
             # cmp with golden
             f.write(test_info.cmp_semantic)
-    
-            # jump added for qemu to log previous block separately
-            f.write("j _end\n")
-            f.write("_end:\n")
-        
+            
         # call exit
         f.write(FILE_END)
 
@@ -153,14 +147,13 @@ def get_golden_ref(insn, tests_info):
         capture_output=True
     )
     out = proc.stdout
-    vals = [struct.unpack_from("<i", out, i)[0] for i in range(0, len(out), 4)]
-    print(vals)
 
-    # add golden model reference values to asm
-    # for test in test_arr:
-    #     str = make_test_str(test)
-    #     add_cmp(str, golden_ref)
-    #     # append str to file "bin_tests/<insn.name>"
+    assert len(out) % 4 == 0
+    vals = [struct.unpack_from("<i", out, i)[0] for i in range(0, len(out), 4)]    
+
+    # add golden ref values
+    for i, _ in enumerate(tests_info):
+        tests_info[i].rd_ref_val = (vals[i], True)
 
 def make_tmp_asm(ir, insn, tests_info):
     # collect tests data for this insn 
@@ -168,7 +161,8 @@ def make_tmp_asm(ir, insn, tests_info):
 
     # make string representation of tests
     for i, test_info in enumerate(tests_info):
-        code = test_info.core_semantic
+        # code = test_info.core_semantic
+        code = ""
         code += f"_begin_test_{i}:\n"
         code += f"{INDENT}li gp,{i}\n"
         
@@ -180,7 +174,7 @@ def make_tmp_asm(ir, insn, tests_info):
         if test_info.rs2_val[1]:
             code += f"{INDENT}li a2, {test_info.rs2_val[0]}\n"
             syntax = syntax.replace("rs2", "a2")
-        if test_info.rd_val:
+        if test_info.rd_ref_val:
             syntax = syntax.replace("rd", "a4")
         
         code += INDENT + syntax
@@ -214,10 +208,10 @@ def main():
     ir = ir_work.read_ir("../result/generated/IR.yaml")
     for insn in TEST_INSNS:
         # insn -- object of 'test_insn_t'
-        tests_info: list[test_info_t] = [test_info_t(test_num=0, rd_val=False)]
+        tests_info: list[test_info_t] = [test_info_t(test_num=0, rd_ref_val=False)]
         make_tmp_asm(ir, insn, tests_info)
         get_golden_ref(insn, tests_info)
-        # make_res_asm(insn, tests_info)
+        make_res_asm(insn, tests_info)
 
 # direct execution
 if __name__ == "__main__":
