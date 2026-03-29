@@ -4,12 +4,38 @@
 .globl _start
 _start:
 
-_begin_test_0:
-	li gp,0
-	li a1, -21
-	li a2, 26
-	sub a4, a1, a2
-	li t2, -47
+	li x1, 0
+	li x3, 0
+	li x4, 0
+	li x5, 0
+	li x6, 0
+	li x7, 0
+	li x8, 0
+	li x9, 0
+	li x10, 0
+	li x11, -30
+	li x12, -1
+	li x13, 0
+	li x15, 0
+	li x16, 0
+	li x17, 0
+	li x18, 0
+	li x19, 0
+	li x20, 0
+	li x21, 0
+	li x22, 0
+	li x23, 0
+	li x24, 0
+	li x25, 0
+	li x26, 0
+	li x27, 0
+	li x28, 0
+	li x29, 0
+	li x30, 0
+	li x31, 0
+
+	sub x14, x11, x12
+	li t2, -29
 	bne a4, t2, _fail
 
 _pass:
