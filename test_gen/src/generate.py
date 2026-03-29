@@ -26,16 +26,11 @@ class test_info_t:
     # reg_num, need/no need to init, value to set/check
     regs_init: dict[int, tuple[bool, int]] = field(default_factory= make_regs_dict)
     regs_check: dict[int, tuple[bool, int]] = field(default_factory= make_regs_dict)
-
     imm: tuple[int, bool] = (None, False)
-    # rd_ref_val: tuple[int, bool] = (None, False) # ref value
-    # rs1_val: tuple[int, bool] = (None, False)
-    # rs2_val: tuple[int, bool] = (None, False)
-
 
     state_init_semantic: str= ""
     core_semantic: str= ""
-    cmp_semantic:  str= ""
+    state_check_semantic:  str= ""
 
 # ------------------- Mapping -------------------
 asm_ops_map = {
@@ -58,8 +53,7 @@ _start:
 
 """
 
-WRITE_GOLD_VAL_STR = """
-    PUSH a4
+WRITE_GOLD_VAL_STR = """    PUSH a4
     li a0, 1
     mv a1, sp
     li a2, 4
@@ -67,15 +61,13 @@ WRITE_GOLD_VAL_STR = """
     ecall
 """
 
-TMP_FILE_END = """
-_end:
+TMP_FILE_END = """_end:
     li a0, 0
     li a7, 93
     ecall
 """ 
 
-FILE_END = """
-_pass:
+FILE_END = """_pass:
     li a0, 0
     li a7, 93
     ecall
@@ -139,22 +131,29 @@ def make_test_values(insn, ir, tests_info):
                 "rd", f"x{asm_ops_map['rd']}"
             )
 
+
 def state_init(insn, ir, tests_info):
     make_test_values(insn, ir, tests_info)
 
+    tests_info[0].state_init_semantic += "_state_init_:\n"
     for i in range(1, 32):
         pair = tests_info[0].regs_init[i]
         if pair[0]:
             tests_info[0].state_init_semantic += f"{INDENT}li x{i}, {pair[1]}\n"
-    tests_info[0].state_init_semantic += "\n"
+
+
+def state_check(tests_info):
+    tests_info[0].state_check_semantic += "_state_check_:\n"
+    for i in range(1, 32):
+        pair = tests_info[0].regs_check[i]
+        if pair[0]:
+            tests_info[0].state_check_semantic += f"{INDENT}li x7, {pair[1]}\n"
+            tests_info[0].state_check_semantic += f"{INDENT}bne x{i}, x7, _fail\n"
+
 # -----------------------------------------------
 def make_res_asm(insn, tests_info):
     # make string representation of cmp part of tests
-    for i, test_info in enumerate(tests_info):
-        code = ""        
-        code += f"{INDENT}li t2, {test_info.rd_ref_val[0]}\n"
-        code += f"{INDENT}bne a4, t2, _fail\n"
-        test_info.cmp_semantic = code
+    state_check(tests_info)
 
     # write to file.s
     test_file = f"{RES_DIR_NAME}/rv32_{insn.name}.s"
@@ -163,11 +162,11 @@ def make_res_asm(insn, tests_info):
 
         for test_info in tests_info:
             # state init
-            f.write(test_info.state_init_semantic)
+            f.write(test_info.state_init_semantic + "\n")
             # main logic
-            f.write(test_info.core_semantic)
+            f.write(test_info.core_semantic + "\n\n")
             # cmp with golden
-            f.write(test_info.cmp_semantic)
+            f.write(test_info.state_check_semantic + "\n")
             
         # call exit
         f.write(FILE_END)
@@ -202,7 +201,7 @@ def get_golden_ref(insn, tests_info):
 
     # add golden ref values
     for i, _ in enumerate(tests_info):
-        tests_info[i].rd_ref_val = (vals[i], True)
+        tests_info[i].regs_check[asm_ops_map["rd"]] = (True, vals[i])
 
 
 def make_tmp_asm(ir, insn, tests_info):
@@ -213,18 +212,8 @@ def make_tmp_asm(ir, insn, tests_info):
     for i, test_info in enumerate(tests_info):
         # code += f"_begin_test_{i}:\n"
         # code += f"{INDENT}li gp,{i}\n"
-        
-        # syntax = ir[insn.name].syntax
-        # if test_info.rs1_val[1]: # replace rs1 with register name
-        #     code += f"{INDENT}li x{asm_ops_map['rs1']}, {test_info.rs1_val[0]}\n"
-        #     syntax = syntax.replace("rs1", f"x{asm_ops_map['rs1']}")
-        # if test_info.rs2_val[1]:
-        #     code += f"{INDENT}li x{asm_ops_map['rs2']}, {test_info.rs2_val[0]}\n"
-        #     syntax = syntax.replace("rs2", f"x{asm_ops_map['rs2']}")
-        # if test_info.rd_ref_val:
-        #     syntax = syntax.replace("rd", f"x{asm_ops_map['rd']}")
-        
-        test_info.core_semantic = INDENT + ir[insn.name].syntax + '\n'
+
+        test_info.core_semantic = INDENT + ir[insn.name].syntax
 
     # write to file.s
     test_file = f"{TMP_DIR_NAME}/rv32_{insn.name}.s"
@@ -233,9 +222,9 @@ def make_tmp_asm(ir, insn, tests_info):
 
         for test_info in tests_info:
             # state init
-            f.write(test_info.state_init_semantic)
+            f.write(test_info.state_init_semantic + "\n")
             # main logic
-            f.write(test_info.core_semantic)
+            f.write(test_info.core_semantic + "\n\n")
             # write reference value to stdout
             f.write(WRITE_GOLD_VAL_STR)
                 
