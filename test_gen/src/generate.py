@@ -54,6 +54,10 @@ _start:
 
 """
 
+CORE_SEMANTIC_LABEL = "_target_insn"
+STATE_INIT_LABEL = "_state_init:"
+STATE_CHECK_LABEL = "_state_check:"
+
 TMP_FILE_END = """_end:
     li a0, 0
     li a7, 93
@@ -74,7 +78,7 @@ _fail:
 # ---------------- User's input -----------------
 TEST_INSNS = [ 
     test_insn_t("add", {"rs1": [-100, 100], "rs2": [-100, 100]}),
-    test_insn_t("sub", {"rs1": [-100, 100], "rs2": [-100, 100]}),
+    test_insn_t("addi", {"rs1": [-100, 100], "imm": [-100, 100]}),
 ]
 
 # ----------------- Functions -------------------
@@ -88,8 +92,8 @@ def make_test_values(insn, ir, tests_info):
                     insn.ranges["rs1"][0],
                     insn.ranges["rs1"][1],
                   )
-            tests_info[0].regs_init[asm_ops_map["rs1"]] = [True, val]
-            tests_info[0].regs_check[asm_ops_map["rs1"]] = [True, val]
+            tests_info[0].regs_init[asm_ops_map["rs1"]] = (True, val)
+            tests_info[0].regs_check[asm_ops_map["rs1"]] = (True, val)
             ir[insn.name].syntax = ir[insn.name].syntax.replace(
                 "rs1", f"x{asm_ops_map['rs1']}"
             )
@@ -99,8 +103,8 @@ def make_test_values(insn, ir, tests_info):
                     insn.ranges["rs2"][0],
                     insn.ranges["rs2"][1],
                   )
-            tests_info[0].regs_init[asm_ops_map["rs2"]] = [True, val]
-            tests_info[0].regs_check[asm_ops_map["rs2"]] = [True, val]
+            tests_info[0].regs_init[asm_ops_map["rs2"]] = (True, val)
+            tests_info[0].regs_check[asm_ops_map["rs2"]] = (True, val)
             ir[insn.name].syntax = ir[insn.name].syntax.replace(
                 "rs2", f"x{asm_ops_map['rs2']}"
             )
@@ -114,7 +118,7 @@ def make_test_values(insn, ir, tests_info):
                 True 
             )
             ir[insn.name].syntax = ir[insn.name].syntax.replace(
-                "imm", {tests_info[0].imm}
+                "imm", f"{tests_info[0].imm[0]}"
             )
 
         if "rd" in insn_metadata.operands:
@@ -128,7 +132,7 @@ def make_test_values(insn, ir, tests_info):
 def state_init(insn, ir, tests_info):
     make_test_values(insn, ir, tests_info)
 
-    tests_info[0].state_init_semantic += "_state_init_:\n"
+    tests_info[0].state_init_semantic += f"{STATE_INIT_LABEL}\n"
     for i in range(1, 32):
         pair = tests_info[0].regs_init[i]
         if pair[0]:
@@ -136,7 +140,7 @@ def state_init(insn, ir, tests_info):
 
 
 def state_check(tests_info):
-    tests_info[0].state_check_semantic += "_state_check_:\n"
+    tests_info[0].state_check_semantic += f"{STATE_CHECK_LABEL}\n"
     for i in range(1, 32):
         pair = tests_info[0].regs_check[i]
         if pair[0]:
@@ -173,17 +177,31 @@ def make_res_asm(insn, tests_info):
         ]
     )
 
-import re
+
+def get_label_address(elf_file, label_name):
+    result = subprocess.run(
+        ["riscv32-unknown-elf-nm", elf_file],
+        check=True,
+        capture_output=True,
+        text=True
+    )
+
+    pattern = re.compile(rf"^([0-9a-fA-F]+)\s+\w\s+{re.escape(label_name)}$", re.MULTILINE)
+    match = pattern.search(result.stdout)
+
+    if not match:
+        raise ValueError(f"Label {label_name} not found in ELF")
+
+    return int(match.group(1), 16)
 
 
-def parse_qemu_log(log_file, target_insn, target_reg):
+def parse_qemu_log_by_pc(log_file, target_pc, target_reg):
     with open(log_file, "r") as f:
         lines = f.readlines()
 
     steps = []
     current_step = []
 
-    # --- collect steps ---
     for line in lines:
         if line.startswith("IN:"):
             if current_step:
@@ -195,12 +213,10 @@ def parse_qemu_log(log_file, target_insn, target_reg):
     if current_step:
         steps.append(current_step)
 
-    # --- regex for instruction line ---
-    insn_pattern = re.compile(
-        rf"0x[0-9a-fA-F]+:\s+[0-9a-fA-F]+\s+{re.escape(target_insn)}\b"
+    pc_pattern = re.compile(
+        rf"0x{target_pc:08x}:\s+[0-9a-fA-F]+\s+\S+"
     )
 
-    # --- regex for register value ---
     reg_pattern = re.compile(
         rf"x{target_reg}/[^\s]+\s+([0-9a-fA-F]+)"
     )
@@ -210,26 +226,22 @@ def parse_qemu_log(log_file, target_insn, target_reg):
     for i, step in enumerate(steps):
         step_text = "".join(step)
 
-        # --- check if this step contains the target instruction ---
-        if not insn_pattern.search(step_text):
+        if not pc_pattern.search(step_text):
             continue
 
-        # --- ensure next step exists ---
         if i + 1 >= len(steps):
             continue
 
         next_step_text = "".join(steps[i + 1])
 
-        # --- extract register value from next step ---
         match = reg_pattern.search(next_step_text)
         if not match:
             continue
 
-        value = int(match.group(1), 16)
-        results.append(value)
+        results.append(int(match.group(1), 16))
 
     if not results:
-        raise ValueError("Instruction not found in log")
+        raise ValueError(f"PC 0x{target_pc:08x} not found in log")
 
     return results
 
@@ -249,10 +261,11 @@ def get_golden_ref(insn, tests_info):
     )
 
     # parse and get reference values
-    vals = parse_qemu_log(QEMU_LOG_FILE_NAME, insn.name, asm_ops_map['rd'])
-
     for i, test in enumerate(tests_info):
-        test.regs_check[asm_ops_map['rd']] = (True, vals[i])
+        label = f"{CORE_SEMANTIC_LABEL}_{i}"
+        pc = get_label_address(elf_file, label)
+        vals = parse_qemu_log_by_pc(QEMU_LOG_FILE_NAME, pc, asm_ops_map["rd"])
+        test.regs_check[asm_ops_map["rd"]] = (True, vals[0])
 
 
 def make_tmp_asm(ir, insn, tests_info):
@@ -261,9 +274,9 @@ def make_tmp_asm(ir, insn, tests_info):
 
     # make string representation of tests
     for i, test_info in enumerate(tests_info):
-        # code += f"_begin_test_{i}:\n"
-        # code += f"{INDENT}li gp,{i}\n"
-        test_info.core_semantic = INDENT + ir[insn.name].syntax
+        test_info.core_semantic += f"{CORE_SEMANTIC_LABEL}_{i}:\n"
+        test_info.core_semantic += f"{INDENT}li gp, {i}\n"
+        test_info.core_semantic += INDENT + ir[insn.name].syntax
 
     # write to file.s
     test_file = f"{TMP_DIR_NAME}/rv32_{insn.name}.s"

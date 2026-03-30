@@ -4,7 +4,7 @@
 .globl _start
 _start:
 
-_state_init_:
+_state_init:
 	li x1, 0
 	li x3, 0
 	li x4, 0
@@ -14,8 +14,8 @@ _state_init_:
 	li x8, 0
 	li x9, 0
 	li x10, 0
-	li x11, 86
-	li x12, -86
+	li x11, 14
+	li x12, -26
 	li x13, 0
 	li x15, 0
 	li x16, 0
@@ -35,9 +35,11 @@ _state_init_:
 	li x30, 0
 	li x31, 0
 
+_target_insn_0:
+	li gp, 0
 	add x14, x11, x12
 
-_state_check_:
+_state_check:
 	li x7, 0
 	bne x1, x7, _fail
 	li x7, 0
@@ -56,9 +58,9 @@ _state_check_:
 	bne x9, x7, _fail
 	li x7, 0
 	bne x10, x7, _fail
-	li x7, 86
+	li x7, 14
 	bne x11, x7, _fail
-	li x7, -86
+	li x7, -26
 	bne x12, x7, _fail
 	li x7, 0
 	bne x13, x7, _fail
