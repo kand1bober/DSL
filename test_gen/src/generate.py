@@ -3,6 +3,7 @@ import numpy as np
 from dataclasses import dataclass, field
 from typing import Tuple
 import struct
+import re
 
 import ir_work
 
@@ -51,14 +52,6 @@ FILE_HEADER = """
 .globl _start
 _start:
 
-"""
-
-WRITE_GOLD_VAL_STR = """    PUSH a4
-    li a0, 1
-    mv a1, sp
-    li a2, 4
-    li a7, 64
-    ecall
 """
 
 TMP_FILE_END = """_end:
@@ -150,7 +143,7 @@ def state_check(tests_info):
             tests_info[0].state_check_semantic += f"{INDENT}li x7, {pair[1]}\n"
             tests_info[0].state_check_semantic += f"{INDENT}bne x{i}, x7, _fail\n"
 
-# -----------------------------------------------
+
 def make_res_asm(insn, tests_info):
     # make string representation of cmp part of tests
     state_check(tests_info)
@@ -180,28 +173,86 @@ def make_res_asm(insn, tests_info):
         ]
     )
 
+import re
+
+
+def parse_qemu_log(log_file, target_insn, target_reg):
+    with open(log_file, "r") as f:
+        lines = f.readlines()
+
+    steps = []
+    current_step = []
+
+    # --- collect steps ---
+    for line in lines:
+        if line.startswith("IN:"):
+            if current_step:
+                steps.append(current_step)
+            current_step = [line]
+        else:
+            current_step.append(line)
+
+    if current_step:
+        steps.append(current_step)
+
+    # --- regex for instruction line ---
+    insn_pattern = re.compile(
+        rf"0x[0-9a-fA-F]+:\s+[0-9a-fA-F]+\s+{re.escape(target_insn)}\b"
+    )
+
+    # --- regex for register value ---
+    reg_pattern = re.compile(
+        rf"x{target_reg}/[^\s]+\s+([0-9a-fA-F]+)"
+    )
+
+    results = []
+
+    for i, step in enumerate(steps):
+        step_text = "".join(step)
+
+        # --- check if this step contains the target instruction ---
+        if not insn_pattern.search(step_text):
+            continue
+
+        # --- ensure next step exists ---
+        if i + 1 >= len(steps):
+            continue
+
+        next_step_text = "".join(steps[i + 1])
+
+        # --- extract register value from next step ---
+        match = reg_pattern.search(next_step_text)
+        if not match:
+            continue
+
+        value = int(match.group(1), 16)
+        results.append(value)
+
+    if not results:
+        raise ValueError("Instruction not found in log")
+
+    return results
+
 
 def get_golden_ref(insn, tests_info):
     # execute on golden model
     elf_file = f"{TMP_DIR_NAME}/rv32_{insn.name}.elf"
-    proc = subprocess.run(
+    subprocess.run(
         [
-            "qemu-riscv32", 
-            # "-d", "in_asm,cpu",
-            # "-D", QEMU_LOG_FILE_NAME,
+            "qemu-riscv32",
+            "-D", QEMU_LOG_FILE_NAME,
+            "-d", "in_asm,cpu",
+            "-singlestep",
             elf_file
         ],
-        check=True,
-        capture_output=True
+        check=True
     )
-    out = proc.stdout
 
-    assert len(out) % 4 == 0
-    vals = [struct.unpack_from("<i", out, i)[0] for i in range(0, len(out), 4)]    
+    # parse and get reference values
+    vals = parse_qemu_log(QEMU_LOG_FILE_NAME, insn.name, asm_ops_map['rd'])
 
-    # add golden ref values
-    for i, _ in enumerate(tests_info):
-        tests_info[i].regs_check[asm_ops_map["rd"]] = (True, vals[i])
+    for i, test in enumerate(tests_info):
+        test.regs_check[asm_ops_map['rd']] = (True, vals[i])
 
 
 def make_tmp_asm(ir, insn, tests_info):
@@ -212,7 +263,6 @@ def make_tmp_asm(ir, insn, tests_info):
     for i, test_info in enumerate(tests_info):
         # code += f"_begin_test_{i}:\n"
         # code += f"{INDENT}li gp,{i}\n"
-
         test_info.core_semantic = INDENT + ir[insn.name].syntax
 
     # write to file.s
@@ -225,9 +275,7 @@ def make_tmp_asm(ir, insn, tests_info):
             f.write(test_info.state_init_semantic + "\n")
             # main logic
             f.write(test_info.core_semantic + "\n\n")
-            # write reference value to stdout
-            f.write(WRITE_GOLD_VAL_STR)
-                
+
         # call exit
         f.write(TMP_FILE_END)
 

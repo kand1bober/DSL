@@ -14,8 +14,8 @@ _state_init_:
 	li x8, 0
 	li x9, 0
 	li x10, 0
-	li x11, 1
-	li x12, 72
+	li x11, -21
+	li x12, -43
 	li x13, 0
 	li x15, 0
 	li x16, 0
@@ -56,13 +56,13 @@ _state_check_:
 	bne x9, x7, _fail
 	li x7, 0
 	bne x10, x7, _fail
-	li x7, 1
+	li x7, -21
 	bne x11, x7, _fail
-	li x7, 72
+	li x7, -43
 	bne x12, x7, _fail
 	li x7, 0
 	bne x13, x7, _fail
-	li x7, -71
+	li x7, 22
 	bne x14, x7, _fail
 	li x7, 0
 	bne x15, x7, _fail
